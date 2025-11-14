@@ -63,5 +63,6 @@ Shows progress as each file is synced, with a summary at the end:
 - Automatically excludes untracked and gitignored files
 - Auto-detects Git remote URL from `origin` remote if not explicitly provided
 - Only syncs files with valid `Path:` field in the header
+- Repository is extracted from the `Path:` field by the server
 - Rate limiting prevents Firebase errors on large syncs
 - Continues processing even if individual files fail

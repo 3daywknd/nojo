@@ -23,24 +23,46 @@ Use regular Write tool instead for:
 ## Usage
 
 ```bash
-node ~/.claude/skills/write-noridoc/script.js --filePath="@/server/src/persistence" --content="# Documentation" [--gitRepoUrl="https://github.com/..."]
+node ~/.claude/skills/write-noridoc/script.js --filePath="@<repository>/path" --content="# Documentation" [--gitRepoUrl="https://github.com/..."]
 ```
 
 ## Parameters
 
-- `--filePath` (required): Path where doc would normally live (e.g., "@/server/src/persistence")
+- `--filePath` (required): Path in format `@<repository>/<path>` (e.g., `@my-repo/server/src/persistence`)
+  - Use `@<repository>/path` for repository-scoped docs
+  - Use `@/path` or plain paths for `no-repository` scope (backward compatible)
 - `--content` (required): Markdown content
 - `--gitRepoUrl` (optional): Link to git repository
 
-## Example
+## Repository Detection
+
+The repository is automatically extracted from the filePath by the server:
+
+- `@my-repo/server/src/api` → repository: `my-repo`
+- `@/server/src/api` → repository: `no-repository`
+- `server/src/api` → repository: `no-repository`
+
+Repository names must be **lowercase letters, numbers, and hyphens** only.
+
+## Examples
+
+### Create repository-scoped noridoc
 
 ```bash
 node ~/.claude/skills/write-noridoc/script.js \
-  --filePath="@/plugin/src/api" \
+  --filePath="@my-repo/server/src/api" \
   --content="# API Client
 
 Provides access to Nori backend." \
-  --gitRepoUrl="https://github.com/theahura/nori-agent-brain"
+  --gitRepoUrl="https://github.com/username/my-repo"
+```
+
+### Create noridoc without repository scope
+
+```bash
+node ~/.claude/skills/write-noridoc/script.js \
+  --filePath="@/server/src/api" \
+  --content="# API Client"
 ```
 
 ## Output
