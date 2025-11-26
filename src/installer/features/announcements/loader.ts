@@ -14,7 +14,7 @@ import { success, info, warn } from "@/installer/logger.js";
 import type { Config } from "@/installer/config.js";
 import type { Loader } from "@/installer/features/loaderRegistry.js";
 
-const NORI_ANNOUNCEMENT = "Powered by Nori AI";
+const NORI_ANNOUNCEMENT = "🍙🍙🍙 Powered by Nori AI 🍙🍙🍙";
 
 /**
  * Configure companyAnnouncements to display Nori branding at startup
