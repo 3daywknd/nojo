@@ -7,6 +7,7 @@ import { announcementsLoader } from "@/cli/features/announcements/loader.js";
 import { configLoader } from "@/cli/features/config/loader.js";
 import { hooksLoader } from "@/cli/features/hooks/loader.js";
 import { profilesLoader } from "@/cli/features/profiles/loader.js";
+import { globalSlashCommandsLoader } from "@/cli/features/slashcommands/loader.js";
 import { statuslineLoader } from "@/cli/features/statusline/loader.js";
 import { versionLoader } from "@/cli/features/version/loader.js";
 
@@ -52,6 +53,7 @@ export class LoaderRegistry {
     this.loaders.set(profilesLoader.name, profilesLoader);
     this.loaders.set(hooksLoader.name, hooksLoader);
     this.loaders.set(statuslineLoader.name, statuslineLoader);
+    this.loaders.set(globalSlashCommandsLoader.name, globalSlashCommandsLoader);
     this.loaders.set(announcementsLoader.name, announcementsLoader);
   }
 
