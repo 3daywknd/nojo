@@ -87,7 +87,7 @@ export const getClaudeProfilesDir = (args: { installDir: string }): string => {
 /**
  * Get the Claude home directory path (always ~/.claude)
  * This is where Claude Code always looks for user-level settings,
- * regardless of where Nori is installed.
+ * regardless of where nojo is installed.
  *
  * @returns Absolute path to ~/.claude
  */

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Nori Profiles Installer
+ * nojo Installer
  *
  * Pipeline-style installer that prompts for configuration and executes feature loaders.
  */
@@ -12,23 +12,27 @@ import * as path from "path";
 
 import semver from "semver";
 
-import { trackEvent } from "@/cli/analytics.js";
 import {
-  displayNoriBanner,
+  displayBanner,
   displayWelcomeBanner,
   displaySeaweedBed,
 } from "@/cli/commands/install/asciiArt.js";
-import { hasExistingInstallation } from "@/cli/commands/install/installState.js";
-import { promptRegistryAuths } from "@/cli/commands/install/registryAuthPrompt.js";
+import {
+  promptFirstInstallStrategy,
+  promptCustomProfileName,
+} from "@/cli/commands/install/firstInstallPrompt.js";
+import {
+  hasExistingInstallation,
+  detectInstallationState,
+} from "@/cli/commands/install/installState.js";
 import {
   loadConfig,
-  getDefaultProfile,
   getAgentProfile,
-  isPaidInstall,
   getInstalledAgents,
   type Config,
 } from "@/cli/config.js";
 import { AgentRegistry } from "@/cli/features/agentRegistry.js";
+import { createProfileFromExisting } from "@/cli/features/claude-code/profiles/snapshot.js";
 import { migrate } from "@/cli/features/migration.js";
 import {
   error,
@@ -128,7 +132,7 @@ const loadAndMigrateConfig = async (args: {
 
     if (fallbackVersion == null) {
       throw new Error(
-        "Existing config has no version field. Please run 'nori-ai uninstall' first, then reinstall.",
+        "Existing config has no version field. Please run 'nojo uninstall' first, then reinstall.",
       );
     }
 
@@ -164,98 +168,33 @@ export const generatePromptConfig = async (args: {
 }): Promise<Config | null> => {
   const { installDir, existingConfig, agent } = args;
 
-  // Check if user wants to reuse existing config
-  if (existingConfig?.auth) {
+  // Check if user wants to reuse existing config with existing profile
+  const existingProfile = existingConfig
+    ? getAgentProfile({ config: existingConfig, agentName: agent.name })
+    : null;
+
+  if (existingProfile) {
     info({
-      message:
-        "I found an existing Nori configuration file. Do you want to keep it?",
+      message: `Found existing configuration with profile: ${existingProfile.baseProfile}`,
     });
-    newline();
-    info({ message: `  Username: ${existingConfig.auth.username}` });
-    info({
-      message: `  Organization URL: ${existingConfig.auth.organizationUrl}`,
-    });
-    const existingProfile = getAgentProfile({
-      config: existingConfig,
-      agentName: agent.name,
-    });
-    if (existingProfile) {
-      info({
-        message: `  Profile: ${existingProfile.baseProfile}`,
-      });
-    }
     newline();
 
     const useExisting = await promptUser({
-      prompt: "Keep existing configuration? (y/n): ",
+      prompt: "Keep existing profile? (y/n): ",
     });
 
     if (useExisting.match(/^[Yy]$/)) {
       info({ message: "Using existing configuration..." });
-      // Use agent-specific profile first, fall back to default
-      const profile =
-        getAgentProfile({ config: existingConfig, agentName: agent.name }) ??
-        getDefaultProfile();
       return {
         ...existingConfig,
         agents: {
-          ...(existingConfig.agents ?? {}),
-          [agent.name]: { profile },
+          ...(existingConfig?.agents ?? {}),
+          [agent.name]: { profile: existingProfile },
         },
         installDir,
       };
     }
 
-    newline();
-  }
-
-  // Prompt for credentials
-  info({
-    message: wrapText({
-      text: "Nori Watchtower is our backend service that enables shared knowledge features - search and recall past solutions across your team, save learnings for future sessions, and server-side documentation with versioning. If you have Watchtower credentials (you should have received them from Josh or Amol), enter your email to enable these features. Otherwise, press enter to continue with local-only features.",
-    }),
-  });
-  newline();
-
-  const username = await promptUser({
-    prompt: "Email address (Watchtower) or hit enter to skip: ",
-  });
-
-  let auth: {
-    username: string;
-    password: string;
-    organizationUrl: string;
-  } | null = null;
-
-  if (username && username.trim() !== "") {
-    const password = await promptUser({
-      prompt: "Enter your password: ",
-      hidden: true,
-    });
-
-    const orgUrl = await promptUser({
-      prompt:
-        "Enter your organization URL (e.g., http://localhost:3000 for local dev): ",
-    });
-
-    if (!password || !orgUrl) {
-      error({
-        message:
-          "Password and organization URL are required for backend installation",
-      });
-      process.exit(1);
-    }
-
-    auth = {
-      username: username.trim(),
-      password: password.trim(),
-      organizationUrl: orgUrl.trim(),
-    };
-
-    info({ message: "Installing with backend support..." });
-    newline();
-  } else {
-    info({ message: "Great. Let's move on to selecting your profile." });
     newline();
   }
 
@@ -307,22 +246,14 @@ export const generatePromptConfig = async (args: {
     newline();
   }
 
-  // Prompt for private registry authentication
-  newline();
-  const registryAuths = await promptRegistryAuths({
-    existingRegistryAuths: existingConfig?.registryAuths ?? null,
-  });
-
   // Build config directly
   const profile = { baseProfile: selectedProfileName };
   return {
-    auth: auth ?? null,
     agents: {
       ...(existingConfig?.agents ?? {}),
       [agent.name]: { profile },
     },
     installDir,
-    registryAuths: registryAuths ?? null,
   };
 };
 
@@ -357,17 +288,17 @@ export const interactive = async (args?: {
 
   if (ancestorInstallations.length > 0) {
     newline();
-    warn({ message: "⚠️  Nori installation detected in ancestor directory!" });
+    warn({ message: "⚠️  nojo installation detected in ancestor directory!" });
     newline();
     info({
       message: "Claude Code loads CLAUDE.md files from all parent directories.",
     });
     info({
       message:
-        "Having multiple Nori installations can cause duplicate or conflicting configurations.",
+        "Having multiple nojo installations can cause duplicate or conflicting configurations.",
     });
     newline();
-    info({ message: "Existing Nori installations found at:" });
+    info({ message: "Existing nojo installations found at:" });
     for (const ancestorPath of ancestorInstallations) {
       info({ message: `  • ${ancestorPath}` });
     }
@@ -375,7 +306,7 @@ export const interactive = async (args?: {
     info({ message: "To remove an existing installation, run:" });
     for (const ancestorPath of ancestorInstallations) {
       info({
-        message: `  cd ${ancestorPath} && nori-ai uninstall`,
+        message: `  cd ${ancestorPath} && nojo uninstall`,
       });
     }
     newline();
@@ -388,6 +319,45 @@ export const interactive = async (args?: {
       info({ message: "Installation cancelled." });
       process.exit(0);
     }
+    newline();
+  }
+
+  // Detect installation state for first-install handling
+  const installState = await detectInstallationState({
+    installDir: normalizedInstallDir,
+  });
+
+  // Handle existing Claude Code configuration without nojo
+  let firstInstallStrategy: "preserve" | "create-profile" | "overwrite" | null =
+    null;
+  let customProfileName: string | null = null;
+
+  if (installState.type === "claude-existing") {
+    // Has .claude directory but no nojo manifest - prompt for strategy
+    const strategy = await promptFirstInstallStrategy({
+      existingFiles: installState.files,
+    });
+
+    if (strategy == null) {
+      info({ message: "Installation cancelled." });
+      process.exit(0);
+    }
+
+    firstInstallStrategy = strategy;
+
+    // If creating a profile, prompt for name
+    if (strategy === "create-profile") {
+      const profileName = await promptCustomProfileName();
+      if (profileName == null) {
+        info({ message: "Installation cancelled." });
+        process.exit(0);
+      }
+      customProfileName = profileName;
+      info({
+        message: `Will create profile "${profileName}" from existing setup.`,
+      });
+    }
+
     newline();
   }
 
@@ -424,7 +394,7 @@ export const interactive = async (args?: {
     });
 
     try {
-      let uninstallCmd = `nori-ai uninstall --non-interactive --install-dir="${normalizedInstallDir}"`;
+      let uninstallCmd = `nojo uninstall --non-interactive --install-dir="${normalizedInstallDir}"`;
       if (supportsAgentFlag({ version: previousVersion })) {
         uninstallCmd += ` --agent="${agentImpl.name}"`;
       }
@@ -447,9 +417,9 @@ export const interactive = async (args?: {
   }
 
   // Display banner
-  displayNoriBanner();
+  displayBanner();
   newline();
-  info({ message: "Let's personalize Nori to your needs." });
+  info({ message: "Let's personalize nojo to your needs." });
   newline();
 
   // Generate configuration through prompts
@@ -464,21 +434,47 @@ export const interactive = async (args?: {
     process.exit(0);
   }
 
-  // Track installation start
-  trackEvent({
-    eventName: "plugin_install_started",
-    eventParams: {
-      install_type: isPaidInstall({ config }) ? "paid" : "free",
-      non_interactive: false,
-    },
-  });
+  // Handle first install strategy
+  if (firstInstallStrategy != null) {
+    switch (firstInstallStrategy) {
+      case "preserve":
+        info({
+          message:
+            "Preserving existing configuration (only adding nojo infrastructure)...",
+        });
+        // Non-destructive loaders will automatically preserve existing files
+        break;
+      case "create-profile":
+        if (customProfileName != null) {
+          // Snapshot existing configuration into a custom profile
+          const created = await createProfileFromExisting({
+            installDir: normalizedInstallDir,
+            profileName: customProfileName,
+          });
+          if (created) {
+            info({
+              message: `You can switch to this profile later with: nojo switch-profile ${customProfileName}`,
+            });
+          }
+        }
+        break;
+      case "overwrite":
+        info({
+          message: "Installing with nojo defaults (overwriting existing)...",
+        });
+        // Note: Current loaders are non-destructive, so existing files are preserved
+        // To truly overwrite, we'd need to delete existing files first
+        break;
+    }
+    newline();
+  }
 
   // Create progress marker
   const currentVersion = getCurrentPackageVersion();
   if (currentVersion) {
     const markerPath = path.join(
       process.env.HOME || "~",
-      ".nori-install-in-progress",
+      ".nojo-install-in-progress",
     );
     writeFileSync(markerPath, currentVersion, "utf-8");
   }
@@ -499,20 +495,11 @@ export const interactive = async (args?: {
   // Remove progress marker
   const markerPath = path.join(
     process.env.HOME || "~",
-    ".nori-install-in-progress",
+    ".nojo-install-in-progress",
   );
   if (existsSync(markerPath)) {
     unlinkSync(markerPath);
   }
-
-  // Track completion
-  trackEvent({
-    eventName: "plugin_install_completed",
-    eventParams: {
-      install_type: isPaidInstall({ config }) ? "paid" : "free",
-      non_interactive: false,
-    },
-  });
 
   displayWelcomeBanner();
   success({
@@ -564,17 +551,17 @@ export const noninteractive = async (args?: {
 
   if (ancestorInstallations.length > 0) {
     newline();
-    warn({ message: "⚠️  Nori installation detected in ancestor directory!" });
+    warn({ message: "⚠️  nojo installation detected in ancestor directory!" });
     newline();
     info({
       message: "Claude Code loads CLAUDE.md files from all parent directories.",
     });
     info({
       message:
-        "Having multiple Nori installations can cause duplicate or conflicting configurations.",
+        "Having multiple nojo installations can cause duplicate or conflicting configurations.",
     });
     newline();
-    info({ message: "Existing Nori installations found at:" });
+    info({ message: "Existing nojo installations found at:" });
     for (const ancestorPath of ancestorInstallations) {
       info({ message: `  • ${ancestorPath}` });
     }
@@ -582,7 +569,7 @@ export const noninteractive = async (args?: {
     info({ message: "To remove an existing installation, run:" });
     for (const ancestorPath of ancestorInstallations) {
       info({
-        message: `  cd ${ancestorPath} && nori-ai uninstall`,
+        message: `  cd ${ancestorPath} && nojo uninstall`,
       });
     }
     newline();
@@ -626,7 +613,7 @@ export const noninteractive = async (args?: {
     });
 
     try {
-      let uninstallCmd = `nori-ai uninstall --non-interactive --install-dir="${normalizedInstallDir}"`;
+      let uninstallCmd = `nojo uninstall --non-interactive --install-dir="${normalizedInstallDir}"`;
       if (supportsAgentFlag({ version: previousVersion })) {
         uninstallCmd += ` --agent="${agentImpl.name}"`;
       }
@@ -664,8 +651,7 @@ export const noninteractive = async (args?: {
       message: "Available profiles: senior-swe, amol, product-manager",
     });
     info({
-      message:
-        "Example: nori-ai install --non-interactive --profile senior-swe",
+      message: "Example: nojo install --non-interactive --profile senior-swe",
     });
     process.exit(1);
   }
@@ -687,21 +673,12 @@ export const noninteractive = async (args?: {
         installDir: normalizedInstallDir,
       };
 
-  // Track installation start
-  trackEvent({
-    eventName: "plugin_install_started",
-    eventParams: {
-      install_type: isPaidInstall({ config }) ? "paid" : "free",
-      non_interactive: true,
-    },
-  });
-
   // Create progress marker
   const currentVersion = getCurrentPackageVersion();
   if (currentVersion) {
     const markerPath = path.join(
       process.env.HOME || "~",
-      ".nori-install-in-progress",
+      ".nojo-install-in-progress",
     );
     writeFileSync(markerPath, currentVersion, "utf-8");
   }
@@ -722,20 +699,11 @@ export const noninteractive = async (args?: {
   // Remove progress marker
   const markerPath = path.join(
     process.env.HOME || "~",
-    ".nori-install-in-progress",
+    ".nojo-install-in-progress",
   );
   if (existsSync(markerPath)) {
     unlinkSync(markerPath);
   }
-
-  // Track completion
-  trackEvent({
-    eventName: "plugin_install_completed",
-    eventParams: {
-      install_type: isPaidInstall({ config }) ? "paid" : "free",
-      non_interactive: true,
-    },
-  });
 
   displayWelcomeBanner();
   success({
@@ -813,7 +781,7 @@ export const registerInstallCommand = (args: { program: Command }): void => {
 
   program
     .command("install")
-    .description("Install Nori Profiles")
+    .description("Install nojo")
     .option(
       "-p, --profile <name>",
       "Profile to install (required for non-interactive install without existing config)",

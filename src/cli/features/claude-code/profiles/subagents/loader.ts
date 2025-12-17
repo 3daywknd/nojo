@@ -1,6 +1,6 @@
 /**
  * Subagents feature loader
- * Registers all Nori subagents with Claude Code
+ * Registers all nojo subagents with Claude Code
  */
 
 import * as fs from "fs/promises";
@@ -47,7 +47,7 @@ const getConfigDir = (args: {
  */
 const registerSubagents = async (args: { config: Config }): Promise<void> => {
   const { config } = args;
-  info({ message: "Registering Nori subagents..." });
+  info({ message: "Registering nojo subagents..." });
 
   // Get profile name from config - error if not configured
   const profileName = getAgentProfile({
@@ -56,7 +56,7 @@ const registerSubagents = async (args: { config: Config }): Promise<void> => {
   })?.baseProfile;
   if (profileName == null) {
     throw new Error(
-      "No profile configured for claude-code. Run 'nori-ai install' to configure a profile.",
+      "No profile configured for claude-code. Run 'nojo install' to configure a profile.",
     );
   }
   const configDir = getConfigDir({
@@ -131,7 +131,7 @@ const registerSubagents = async (args: { config: Config }): Promise<void> => {
  */
 const unregisterSubagents = async (args: { config: Config }): Promise<void> => {
   const { config } = args;
-  info({ message: "Removing Nori subagents..." });
+  info({ message: "Removing nojo subagents..." });
 
   let removedCount = 0;
 
@@ -221,7 +221,7 @@ const validate = async (args: {
     await fs.access(claudeAgentsDir);
   } catch {
     errors.push(`Agents directory not found at ${claudeAgentsDir}`);
-    errors.push('Run "nori-ai install" to create the agents directory');
+    errors.push('Run "nojo install" to create the agents directory');
     return {
       valid: false,
       message: "Agents directory not found",
@@ -236,7 +236,7 @@ const validate = async (args: {
   })?.baseProfile;
   if (profileName == null) {
     errors.push("No profile configured for claude-code");
-    errors.push("Run 'nori-ai install' to configure a profile");
+    errors.push("Run 'nojo install' to configure a profile");
     return {
       valid: false,
       message: "No profile configured",
@@ -282,7 +282,7 @@ const validate = async (args: {
         ", ",
       )}`,
     );
-    errors.push('Run "nori-ai install" to register missing subagents');
+    errors.push('Run "nojo install" to register missing subagents');
     return {
       valid: false,
       message: "Some subagents are not installed",

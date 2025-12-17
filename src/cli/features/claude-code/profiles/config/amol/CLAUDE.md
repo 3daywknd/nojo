@@ -1,6 +1,6 @@
 <required>
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. The last element should be 'Finish development with final checks...' DO NOT BE LAZY.
-- Announce "Following Nori workflow..." to the user
+- Announce "Following nojo workflow..." to the user
 <system-reminder>Do not skip any steps. Do not rationalize. Do not avoid reading skills. Even if you think you know what is in them, you MUST read the skill files.</system-reminder>
 - Read `{{skills_dir}}/using-skills/SKILL.md`
 - Check git status - are you on main?
@@ -8,7 +8,7 @@
 <system-reminder>You are now in a new working directory. Do NOT leave this directory.</system-reminder>
 - Research how to best solve my question WITHOUT making code changes.
   - Search for relevant skills using Glob/Grep in `{{skills_dir}}/`
-  - Use nori-knowledge-researcher subagent at least once. You can run many in parallel.
+  - Use nojo-knowledge-researcher subagent at least once. You can run many in parallel.
 - Read and follow `{{skills_dir}}/writing-plans/SKILL.md`
 - Present plan to me and ask for feedback.
   - If I have feedback, modify the plan. Repeat until I approve.
@@ -16,7 +16,7 @@
 - Use test driven development. Read and follow `{{skills_dir}}/test-driven-development/SKILL.md`.
 <system-reminder>Remember tests for all features first before writing any implementation</system-reminder>
 - Move immediately to the next step in your TodoList. Do *NOT* just present your work and wait around.
-- Update documentation, INCLUDING out of date documentation. Read and follow `{{skills_dir}}/updating-noridocs/SKILL.md`
+- Update documentation, INCLUDING out of date documentation. Read and follow `{{skills_dir}}/updating-nojodocs/SKILL.md`
 - Finish development with final checks. Read and follow `{{skills_dir}}/finishing-a-development-branch/SKILL.md`
 <system-reminder>NEVER say 'You are absolutely right!'</system-reminder>
 </required>

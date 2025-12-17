@@ -3,11 +3,14 @@
  * Provides colorized console output functions and file logging using Winston
  */
 
+import * as os from "os";
+import * as path from "path";
+
 import winston from "winston";
 import Transport from "winston-transport";
 
-// Log file path - exported for testing
-export const LOG_FILE = "/tmp/nori.log";
+// Log file path - cross-platform using os.tmpdir()
+export const LOG_FILE = path.join(os.tmpdir(), "nojo.log");
 
 // Custom log levels matching current behavior
 const levels = {

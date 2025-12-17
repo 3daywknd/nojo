@@ -1,10 +1,10 @@
-# Noridoc: Global Slash Commands
+# nojo-doc: Global Slash Commands
 
 Path: @/src/cli/features/claude-code/slashcommands
 
 ### Overview
 
-Profile-agnostic slash commands installed directly to `~/.claude/commands/` independent of profile selection. These commands provide Nori system utilities that work the same regardless of which profile is active.
+Profile-agnostic slash commands installed directly to `~/.claude/commands/` independent of profile selection. These commands provide nojo system utilities that work the same regardless of which profile is active.
 
 ### How it fits into the larger codebase
 
@@ -46,11 +46,11 @@ Profile-agnostic slash commands installed directly to `~/.claude/commands/` inde
 
 | Command Type | Source Location | Loader | Examples |
 |-------------|-----------------|--------|----------|
-| Global | @/src/cli/features/claude-code/slashcommands/config/ | globalSlashCommandsLoader | nori-debug, nori-switch-profile, nori-info |
+| Global | @/src/cli/features/claude-code/slashcommands/config/ | globalSlashCommandsLoader | nojo-debug, nojo-switch-profile, nojo-info |
 | Profile | @/src/cli/features/claude-code/profiles/config/_mixins/*/slashcommands/ | slashCommandsLoader (profiles) | nori-init-docs, nori-sync-docs |
 
-**Hook-intercepted commands**: Several global commands (`nori-switch-profile`, `nori-toggle-autoupdate`, `nori-toggle-session-transcripts`, `nori-install-location`, `nori-prune-context`) are intercepted by the slash-command-intercept hook and executed directly by TypeScript code rather than by Claude. The markdown files still provide the `description` frontmatter for Claude Code's command palette.
+**Hook-intercepted commands**: Several global commands (`nojo-switch-profile`, `nori-toggle-autoupdate`, `nori-toggle-session-transcripts`, `nori-install-location`, `nori-prune-context`) are intercepted by the slash-command-intercept hook and executed directly by TypeScript code rather than by Claude. The markdown files still provide the `description` frontmatter for Claude Code's command palette.
 
 **Uninstall behavior**: When uninstalling, the loader only removes files matching the `GLOBAL_SLASH_COMMANDS` list. Custom user commands in `~/.claude/commands/` are preserved. The commands directory is only removed if empty after cleanup.
 
-Created and maintained by Nori.
+Created and maintained by nojo.

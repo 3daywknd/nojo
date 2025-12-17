@@ -76,7 +76,7 @@ describe("uninstall cleanup", () => {
     agentsDir = path.join(claudeDir, "agents");
     commandsDir = path.join(claudeDir, "commands");
     profilesDir = path.join(claudeDir, "profiles");
-    configPath = path.join(tempDir, ".nori-config.json");
+    configPath = path.join(tempDir, ".nojo-config.json");
 
     // CRITICAL: Mock cwd to point to temp directory
     process.cwd = () => tempDir;

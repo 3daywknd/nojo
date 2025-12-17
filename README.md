@@ -1,26 +1,24 @@
-# Nori Profiles
+# nojo
 
-**Create custom coding agents that are fit for purpose.**
+**A solo developer's profiles manager for Claude Code.**
 
-As projects grow in complexity and specificity, off the shelf agents become less effective. Nori Profiles is a tool for building custom coding agents that are encoded with your development patterns, design standards, and engineering workflows.
+nojo is a lightweight tool for building custom coding agent profiles that are encoded with your development patterns, design standards, and engineering workflows. It's designed for individual developers who want to precisely control how Claude Code behaves.
 
-Nori lets you precisely define how you want your coding agent to reliably behave for engineering tasks:
-- Define consistent agent behavior for areas of development, tasks, or team roles
-- Automate repeated steps of your workflow to offload your cognitive load, such as git workflows, file references, and testing
+nojo lets you define consistent agent behavior for different tasks:
+- Define consistent agent behavior for areas of development or task types
+- Automate repeated steps of your workflow (git, testing, planning)
 - Launch custom agents instantly without repeating setup or context
 
-Under the hood, Nori wraps Claude Code with a config management system that automatically defines desired behavior in agent configuration and context layers like Claude.md, Skills, Subagents.
-
-![Console](https://raw.githubusercontent.com/tilework-tech/nori-plugin/refs/heads/main/Console.png)
+Under the hood, nojo wraps Claude Code with a config management system that automatically defines desired behavior through Claude.md, Skills, and Subagents.
 
 ## Installation
 
 ```bash
-npm install -g nori-ai
-nori-ai install
+npm install -g cbxm/nojo
+nojo install
 ```
 
-Launch Claude Code from your terminal. Nori features activate automatically.
+Launch Claude Code from your terminal. nojo features activate automatically.
 
 ## Requirements
 
@@ -30,7 +28,7 @@ Launch Claude Code from your terminal. Nori features activate automatically.
 
 ### Start by testing a profile
 
-During installation, choose a sample profile to try out how Nori works.
+During installation, choose a sample profile to try out how nojo works.
 
 Examples:
 
@@ -41,10 +39,10 @@ Examples:
 Switch profiles anytime:
 
 ```bash
-nori-ai switch-profile <profile-name>
+nojo switch-profile <profile-name>
 ```
 
-Or use `/nori-switch-profile` during a conversation.
+Or use `/nojo/switch-profile` during a conversation.
 
 
 ### How to create your own profile
@@ -56,7 +54,7 @@ Define precise scopes of behavior for your development tasks. Your preferences f
 Run
 
 ```
-/nori-create-profile
+/nojo/create-profile
 ```
 
 Claude will guide you through:
@@ -90,14 +88,14 @@ Claude will guide you through:
    ln -s ~/.claude/_mixins/_swe ~/.claude/profiles/my-profile/_swe
    ```
 
-   Available mixins: `_swe` (engineering), `_pm` (product), `_doc` (documentation)
+   Available mixins: `_swe` (engineering), `_docs` (documentation)
 
 4. Activate your profile:
    ```bash
-   nori-ai switch-profile my-profile
+   nojo switch-profile my-profile
    ```
 
-   Or use `/nori-switch-profile` during a conversation.
+   Or use `/nojo/switch-profile` during a conversation.
 
 **Profile structure:**
 
@@ -108,38 +106,27 @@ Profiles live in `~/.claude/profiles/` and contain:
 
 Each profile represents a distinct mode of work, letting you instantly tune the agent for different tasks.
 
-## Additional Features
+## Features
 
-### Nori-profiles
-
-_Enhances Claude Code with improved visibility and automations._
-
-- **6-checkpoint development workflow**: Setup verification → research → plan approval → TDD cycle → implementation → verification
+- **Development workflow**: Setup verification → research → plan approval → TDD cycle → implementation → verification
 - **32+ engineering skills**: Step-by-step instructions for TDD, debugging, code review, git workflows, architecture decisions
 - **3 built-in profiles**: senior-swe, product-manager, documenter
 - **Real-time status line**: Git branch, active profile, token usage, conversation cost
-- **Slash commands**: Quick access to workflows (`/nori-info`, `/nori-debug`, `/nori-init-docs`, `/nori-switch-profile`)
+- **Slash commands**: Quick access to workflows (`/nojo/info`, `/nojo/debug`, `/nojo/switch-profile`)
 - **Specialized subagents**: codebase-locator, codebase-analyzer, codebase-pattern-finder, web-search-researcher
-- **Local noridocs**: Automatic documentation with change-documenter and initial-documenter subagents
-
-### Nori-registry (Paid)
-
-_Web app for uploading, discovering, and downloading custom coding agents across a team._
-
-Upload your custom agents to a shared registry where your team can discover and download them. Search by name, tags, or description. Download agents instantly with a single command. Makes it easy to share specialized agents across your organization.
 
 ## Commands
 
 ```bash
-nori-ai              # Install (default)
-nori-ai install      # Install (explicit)
-nori-ai uninstall    # Uninstall all features
-nori-ai help         # Show help message
-nori-ai check        # Run configuration validation
+nojo              # Install (default)
+nojo install      # Install (explicit)
+nojo uninstall    # Uninstall all features
+nojo help         # Show help message
+nojo check        # Run configuration validation
 ```
 
 ## Special Thanks
 
 - [Simon Willison](https://simonwillison.net/) for inspiration
-- [Jesse Vincent](https://blog.fsck.com/) for valuable insight and the superpowers library, which forms the basis of Nori's skills
+- [Jesse Vincent](https://blog.fsck.com/) for valuable insight and the superpowers library, which forms the basis of nojo's skills
 - The [humanlayer](https://github.com/humanlayer/humanlayer/tree/main) team for great writing on using agents and some subagent implementations

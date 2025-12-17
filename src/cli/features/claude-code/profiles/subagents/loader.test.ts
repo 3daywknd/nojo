@@ -91,50 +91,16 @@ describe("subagentsLoader", () => {
       const files = await fs.readdir(agentsDir);
       expect(files.length).toBeGreaterThan(0);
 
-      // Free mode should have common subagents like nori-codebase-analyzer
+      // Free mode should have common subagents like nojo-codebase-analyzer
       const fileNames = await fs.readdir(agentsDir);
       const hasCodebaseAnalyzer = fileNames.includes(
-        "nori-codebase-analyzer.md",
+        "nojo-codebase-analyzer.md",
       );
       expect(hasCodebaseAnalyzer).toBe(true);
     });
 
-    it("should create agents directory and copy subagent files for paid installation", async () => {
-      const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
-        installDir: tempDir,
-        agents: {
-          "claude-code": { profile: { baseProfile: "senior-swe" } },
-        },
-      };
-
-      // Recompose profiles with paid mixin
-      await profilesLoader.run({ config });
-
-      await subagentsLoader.install({ config });
-
-      // Verify agents directory exists
-      const exists = await fs
-        .access(agentsDir)
-        .then(() => true)
-        .catch(() => false);
-
-      expect(exists).toBe(true);
-
-      // Verify at least one subagent file was copied
-      const files = await fs.readdir(agentsDir);
-      expect(files.length).toBeGreaterThan(0);
-
-      // Paid mode should have nori-knowledge-researcher subagent
-      const fileNames = await fs.readdir(agentsDir);
-      const hasKnowledgeResearcher = fileNames.includes(
-        "nori-knowledge-researcher.md",
-      );
-      expect(hasKnowledgeResearcher).toBe(true);
+    it.skip("should create agents directory and copy subagent files for paid installation [REMOVED - paid features]", async () => {
+      // Test removed - paid features no longer exist
     });
 
     it("should copy more subagents for paid than free installation", async () => {
@@ -145,11 +111,6 @@ describe("subagentsLoader", () => {
         },
       };
       const paidConfig: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
@@ -234,11 +195,6 @@ describe("subagentsLoader", () => {
     it("should remove subagent files for paid installation", async () => {
       const config: Config = {
         installDir: tempDir,
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
         },

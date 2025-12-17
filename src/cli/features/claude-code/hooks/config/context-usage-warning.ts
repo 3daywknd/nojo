@@ -96,7 +96,7 @@ export const main = async (args?: { cwd?: string | null }): Promise<void> => {
 
       let message = `⚠️ **High Context Usage from Permissions**\n\n`;
       message += `Your settings.local.json files are consuming ~${estimatedTokens.toLocaleString()} tokens.\n\n`;
-      message += `Run \`/nori-prune-context\` to clear accumulated permissions and reduce context usage.`;
+      message += `Run \`/nojo/prune-context\` to clear accumulated permissions and reduce context usage.`;
 
       logToClaudeSession({ message });
     }

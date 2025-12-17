@@ -9,11 +9,11 @@ const BLUE = "\x1b[0;34m";
 const NC = "\x1b[0m"; // No Color
 
 /**
- * Display NORI ASCII art banner
+ * Display nojo ASCII art banner
  * @param args - Configuration arguments
  * @param args.color - ANSI color code to use (defaults to blue)
  */
-export const displayNoriBanner = (args?: { color?: string | null }): void => {
+export const displayBanner = (args?: { color?: string | null }): void => {
   const color = args?.color ?? BLUE;
   const colorPrefix = color ?? "";
   const colorSuffix = color ? NC : "";
@@ -41,7 +41,7 @@ export const displayNoriBanner = (args?: { color?: string | null }): void => {
 };
 
 /**
- * Display "Welcome to Nori" completion banner
+ * Display "Welcome to nojo" completion banner
  * @param args - Configuration arguments
  * @param args.color - ANSI color code to use (defaults to blue)
  */

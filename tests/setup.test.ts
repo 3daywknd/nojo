@@ -49,7 +49,7 @@ describe("detectNoriPollution", () => {
     // Create Nori-managed CLAUDE.md
     fs.writeFileSync(
       path.join(claudeDir, "CLAUDE.md"),
-      "# BEGIN NORI-AI MANAGED BLOCK\nContent\n# END NORI-AI MANAGED BLOCK",
+      "# BEGIN NOJO MANAGED BLOCK\nContent\n# END NOJO MANAGED BLOCK",
     );
 
     const pollution = detectNoriPollution(tempDir);

@@ -1,5 +1,5 @@
 /**
- * Config migration system for Nori Profiles
+ * Config migration system for nojo
  *
  * Handles versioned migrations to transform config from old formats to new formats.
  * Migrations are applied in semver order during installation.

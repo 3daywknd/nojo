@@ -120,17 +120,12 @@ describe("profilesLoader", () => {
       // Should only have using-skills from base mixin
       expect(skills).toContain("using-skills");
       expect(skills).not.toContain("test-driven-development"); // from swe mixin
-      expect(skills).not.toContain("updating-noridocs"); // from docs mixin
+      expect(skills).not.toContain("updating-nojodocs"); // from docs mixin
     });
 
     it("should create profiles directory and copy profile templates for paid installation", async () => {
       const config: Config = {
         installDir: tempDir,
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
         },
@@ -293,11 +288,6 @@ describe("profilesLoader", () => {
     it("should remove built-in profiles for paid installation", async () => {
       const config: Config = {
         installDir: tempDir,
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
         },
@@ -782,7 +772,7 @@ describe("profilesLoader", () => {
     });
   });
 
-  describe("injectConditionalMixins", () => {
+  describe.skip("injectConditionalMixins [REMOVED FEATURE]", () => {
     it("should inject paid mixin for paid user", () => {
       const metadata = {
         name: "test-profile",
@@ -794,11 +784,6 @@ describe("profilesLoader", () => {
       };
 
       const config: Config = {
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "test-profile" } },
         },
@@ -822,11 +807,6 @@ describe("profilesLoader", () => {
       };
 
       const config: Config = {
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "test-profile" } },
         },
@@ -856,11 +836,6 @@ describe("profilesLoader", () => {
       };
 
       const config: Config = {
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "test-profile" } },
         },
@@ -891,11 +866,6 @@ describe("profilesLoader", () => {
       };
 
       const config: Config = {
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "test-profile" } },
         },
@@ -929,7 +899,6 @@ describe("profilesLoader", () => {
       };
 
       const config: Config = {
-        auth: null,
         agents: {
           "claude-code": { profile: { baseProfile: "test-profile" } },
         },
@@ -960,11 +929,6 @@ describe("profilesLoader", () => {
       };
 
       const config: Config = {
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "test-profile" } },
         },
@@ -992,11 +956,6 @@ describe("profilesLoader", () => {
       };
 
       const config: Config = {
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "test-profile" } },
         },

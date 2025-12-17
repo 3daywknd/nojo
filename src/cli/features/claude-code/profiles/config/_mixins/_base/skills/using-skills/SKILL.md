@@ -69,7 +69,7 @@ The workflow is overkill, I'll just do this directly.
 </bad-example>
 
 <good-example>
-Following Nori workflow...
+Following nojo workflow...
 </good-example>
 
 # Announcing Skill Usage

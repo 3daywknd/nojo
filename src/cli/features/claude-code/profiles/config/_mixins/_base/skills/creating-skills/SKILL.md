@@ -11,7 +11,7 @@ description: Use when you need to create a new custom skill for a profile - guid
 3. Create skill directory structure
 4. Write SKILL.md with proper frontmatter
 5. (Optional) Write and bundle scripts
-6. Instruct the user to run /nori-switch-profile to switch profiles.
+6. Instruct the user to run /nojo/switch-profile to switch profiles.
 </required>
 
 # Overview
@@ -61,7 +61,7 @@ that instruction to the <required> block.
 
 These variables are automatically substituted when skills are installed:
 - `{{skills_dir}}` → actual path to skills directory (e.g., `/home/user/.claude/skills`)
-- `{{nori_install_dir}}` → actual install directory (e.g., `/home/user`)
+- `{{nojo_install_dir}}` → actual install directory (e.g., `/home/user`)
 
 Use these in your skill content to create portable paths. This is especially
 necessary for making sure scripts are discoverable.

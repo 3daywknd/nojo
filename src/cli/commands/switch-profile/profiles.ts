@@ -1,5 +1,5 @@
 /**
- * Profile management for Nori Profiles
+ * Profile management for nojo
  * Handles profile listing, loading, and switching
  */
 
@@ -153,8 +153,8 @@ export const registerSwitchProfileCommand = (args: {
         const installations = getInstallDirs({ currentDir: process.cwd() });
         if (installations.length === 0) {
           throw new Error(
-            "No Nori installations found in current directory or parent directories. " +
-              "Run 'nori-ai install' to create a new installation, or use --install-dir to specify a location.",
+            "No nojo installations found in current directory or parent directories. " +
+              "Run 'nojo install' to create a new installation, or use --install-dir to specify a location.",
           );
         }
         installDir = installations[0]; // Use closest installation

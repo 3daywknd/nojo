@@ -228,9 +228,9 @@ const generateSkillsList = async (args: {
     );
 
     const contextMessage = `
-# Nori Skills System
+# nojo Skills System
 
-You have access to the Nori skills system. Read the full instructions at: ${usingSkillsPath}
+You have access to the nojo skills system. Read the full instructions at: ${usingSkillsPath}
 
 ## Available Skills
 
@@ -248,8 +248,8 @@ Check if any of these skills are relevant to the user's task. If relevant, use t
 };
 
 // Markers for managed block
-const BEGIN_MARKER = "# BEGIN NORI-AI MANAGED BLOCK";
-const END_MARKER = "# END NORI-AI MANAGED BLOCK";
+const BEGIN_MARKER = "# BEGIN NOJO MANAGED BLOCK";
+const END_MARKER = "# END NOJO MANAGED BLOCK";
 
 /**
  * Insert or update CLAUDE.md with nori instructions in a managed block
@@ -268,7 +268,7 @@ const insertClaudeMd = async (args: { config: Config }): Promise<void> => {
   })?.baseProfile;
   if (profileName == null) {
     throw new Error(
-      "No profile configured for claude-code. Run 'nori-ai install' to configure a profile.",
+      "No profile configured for claude-code. Run 'nojo install' to configure a profile.",
     );
   }
 
@@ -320,12 +320,12 @@ const insertClaudeMd = async (args: { config: Config }): Promise<void> => {
       regex,
       `${BEGIN_MARKER}\n${instructions}\n${END_MARKER}\n`,
     );
-    info({ message: "Updating existing nori instructions in CLAUDE.md..." });
+    info({ message: "Updating existing nojo instructions in CLAUDE.md..." });
   } else {
     // Append new managed block
     const section = `\n${BEGIN_MARKER}\n${instructions}\n${END_MARKER}\n`;
     content = content + section;
-    info({ message: "Adding nori instructions to CLAUDE.md..." });
+    info({ message: "Adding nojo instructions to CLAUDE.md..." });
   }
 
   await fs.writeFile(claudeMdFile, content);
@@ -340,7 +340,7 @@ const insertClaudeMd = async (args: { config: Config }): Promise<void> => {
  */
 const removeClaudeMd = async (args: { config: Config }): Promise<void> => {
   const { config } = args;
-  info({ message: "Removing nori instructions from CLAUDE.md..." });
+  info({ message: "Removing nojo instructions from CLAUDE.md..." });
 
   const claudeMdFile = getClaudeMdFile({ installDir: config.installDir });
 
@@ -349,7 +349,7 @@ const removeClaudeMd = async (args: { config: Config }): Promise<void> => {
 
     // Check if managed block exists
     if (!content.includes(BEGIN_MARKER)) {
-      info({ message: "No nori instructions found in CLAUDE.md" });
+      info({ message: "No nojo instructions found in CLAUDE.md" });
       return;
     }
 
@@ -367,7 +367,7 @@ const removeClaudeMd = async (args: { config: Config }): Promise<void> => {
     } else {
       await fs.writeFile(claudeMdFile, updated);
       success({
-        message: "✓ Nori instructions removed from CLAUDE.md (file preserved)",
+        message: "✓ nojo instructions removed from CLAUDE.md (file preserved)",
       });
     }
   } catch {
@@ -396,7 +396,7 @@ const validate = async (args: {
     await fs.access(claudeMdFile);
   } catch {
     errors.push(`CLAUDE.md not found at ${claudeMdFile}`);
-    errors.push('Run "nori-ai install" to create CLAUDE.md');
+    errors.push('Run "nojo install" to create CLAUDE.md');
     return {
       valid: false,
       message: "CLAUDE.md not found",
@@ -420,11 +420,11 @@ const validate = async (args: {
 
   // Check if managed block exists
   if (!content.includes(BEGIN_MARKER) || !content.includes(END_MARKER)) {
-    errors.push("Nori managed block not found in CLAUDE.md");
-    errors.push('Run "nori-ai install" to add managed block');
+    errors.push("nojo managed block not found in CLAUDE.md");
+    errors.push('Run "nojo install" to add managed block');
     return {
       valid: false,
-      message: "Nori managed block missing",
+      message: "nojo managed block missing",
       errors,
     };
   }

@@ -95,11 +95,6 @@ describe("slashCommandsLoader", () => {
     it("should create commands directory and copy slash command files for paid installation", async () => {
       const config: Config = {
         installDir: tempDir,
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
         },

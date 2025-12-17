@@ -1,6 +1,6 @@
 /**
  * Slash commands feature loader
- * Registers all Nori slash commands with Claude Code
+ * Registers all nojo slash commands with Claude Code
  */
 
 import * as fs from "fs/promises";
@@ -49,7 +49,7 @@ const registerSlashCommands = async (args: {
   config: Config;
 }): Promise<void> => {
   const { config } = args;
-  info({ message: "Registering Nori slash commands..." });
+  info({ message: "Registering nojo slash commands..." });
 
   // Get profile name from config - error if not configured
   const profileName = getAgentProfile({
@@ -58,7 +58,7 @@ const registerSlashCommands = async (args: {
   })?.baseProfile;
   if (profileName == null) {
     throw new Error(
-      "No profile configured for claude-code. Run 'nori-ai install' to configure a profile.",
+      "No profile configured for claude-code. Run 'nojo install' to configure a profile.",
     );
   }
   const configDir = getConfigDir({
@@ -137,7 +137,7 @@ const unregisterSlashCommands = async (args: {
   config: Config;
 }): Promise<void> => {
   const { config } = args;
-  info({ message: "Removing Nori slash commands..." });
+  info({ message: "Removing nojo slash commands..." });
 
   let removedCount = 0;
 
@@ -231,7 +231,7 @@ const validate = async (args: {
     await fs.access(claudeCommandsDir);
   } catch {
     errors.push(`Commands directory not found at ${claudeCommandsDir}`);
-    errors.push('Run "nori-ai install" to create the commands directory');
+    errors.push('Run "nojo install" to create the commands directory');
     return {
       valid: false,
       message: "Commands directory not found",
@@ -246,7 +246,7 @@ const validate = async (args: {
   })?.baseProfile;
   if (profileName == null) {
     errors.push("No profile configured for claude-code");
-    errors.push("Run 'nori-ai install' to configure a profile");
+    errors.push("Run 'nojo install' to configure a profile");
     return {
       valid: false,
       message: "No profile configured",
@@ -292,7 +292,7 @@ const validate = async (args: {
         missingCommands.length
       } slash command(s): ${missingCommands.join(", ")}`,
     );
-    errors.push('Run "nori-ai install" to register missing commands');
+    errors.push('Run "nojo install" to register missing commands');
     return {
       valid: false,
       message: "Some slash commands are not installed",

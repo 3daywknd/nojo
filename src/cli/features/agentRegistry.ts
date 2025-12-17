@@ -4,7 +4,6 @@
  */
 
 import { claudeCodeAgent } from "@/cli/features/claude-code/agent.js";
-import { cursorAgent } from "@/cli/features/cursor-agent/agent.js";
 
 import type { Config } from "@/cli/config.js";
 
@@ -12,7 +11,7 @@ import type { Config } from "@/cli/config.js";
  * Canonical agent names used as UIDs in the registry.
  * Each Agent.name must match one of these values.
  */
-export type AgentName = "claude-code" | "cursor-agent";
+export type AgentName = "claude-code";
 
 /**
  * Result of validation check
@@ -41,7 +40,7 @@ export type Loader = {
  *
  * IMPORTANT: All agents MUST include the config loader in their registry.
  * The config loader (from @/cli/features/config/loader.js) manages the shared
- * .nori-config.json file and must be included for proper installation/uninstallation.
+ * .nojo-config.json file and must be included for proper installation/uninstallation.
  */
 export type LoaderRegistry = {
   /** Get all registered loaders in installation order */
@@ -101,7 +100,6 @@ export class AgentRegistry {
   private constructor() {
     this.agents = new Map();
     this.agents.set(claudeCodeAgent.name, claudeCodeAgent);
-    this.agents.set(cursorAgent.name, cursorAgent);
   }
 
   /**

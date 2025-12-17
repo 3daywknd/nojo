@@ -1,7 +1,7 @@
 /**
  * Install Location Command
  *
- * Displays Nori installation directories found in the current directory and parent directories.
+ * Displays nojo installation directories found in the current directory and parent directories.
  */
 
 import { error, success, info, newline } from "@/cli/logger.js";
@@ -21,7 +21,7 @@ export const registerInstallLocationCommand = (args: {
 
   program
     .command("install-location")
-    .description("Display Nori installation directories")
+    .description("Display nojo installation directories")
     .action(async () => {
       const currentDir = process.cwd();
       const installDirs = getInstallDirs({ currentDir });
@@ -29,13 +29,13 @@ export const registerInstallLocationCommand = (args: {
       if (installDirs.length === 0) {
         error({
           message:
-            "No Nori installations found in current directory or parent directories",
+            "No nojo installations found in current directory or parent directories",
         });
         process.exit(1);
       }
 
       newline();
-      info({ message: "Nori installation directories:" });
+      info({ message: "nojo installation directories:" });
       newline();
 
       for (const dir of installDirs) {

@@ -1,6 +1,6 @@
 /**
  * Commit-author PreToolUse hook
- * Intercepts git commit commands and replaces Claude attribution with Nori
+ * Intercepts git commit commands and removes Claude Code attribution
  */
 
 // Type for the stdin JSON from Claude Code
@@ -45,63 +45,26 @@ export const isGitCommitCommand = (args: { command: string }): boolean => {
 };
 
 /**
- * Replace Claude attribution with Nori attribution in commit message
+ * Remove Claude Code attribution from commit message
  * @param args - Arguments object
  * @param args.command - The original git commit command
  *
- * @returns Modified command with Nori attribution
+ * @returns Modified command with Claude attribution removed
  */
 export const replaceAttribution = (args: { command: string }): string => {
   const { command } = args;
 
   // Pattern to match Claude attribution in heredoc format
   const claudeAttributionPattern =
-    /Co-Authored-By:\s*Claude\s*<noreply@anthropic\.com>/gi;
+    /\n*Co-Authored-By:\s*Claude\s*<noreply@anthropic\.com>\n*/gi;
 
-  // First, try to replace existing Claude attribution
-  let modifiedCommand = command.replace(
-    claudeAttributionPattern,
-    "Co-Authored-By: Nori <contact@tilework.tech>",
-  );
-
-  // Check if Claude Code URL pattern exists and replace it
+  // Pattern to match Claude Code URL
   const claudeCodeUrlPattern =
-    /🤖\s*Generated\s*with\s*\[Claude Code\]\(https:\/\/claude\.com\/claude-code\)/gi;
-  modifiedCommand = modifiedCommand.replace(
-    claudeCodeUrlPattern,
-    "🤖 Generated with [Nori](https://nori.ai)",
-  );
+    /\n*🤖\s*Generated\s*with\s*\[Claude Code\]\(https:\/\/claude\.com\/claude-code\)\n*/gi;
 
-  // If there was Claude attribution, return the modified command
-  if (modifiedCommand !== command) {
-    return modifiedCommand;
-  }
-
-  // If no Claude attribution found, we need to add Nori attribution
-  // Check if this is a heredoc format (contains EOF)
-  if (command.includes("EOF")) {
-    // Insert Nori attribution before the closing EOF
-    const eofPattern = /(EOF\s*\n\s*\))/;
-    modifiedCommand = command.replace(
-      eofPattern,
-      `🤖 Generated with [Nori](https://nori.ai)\n\nCo-Authored-By: Nori <contact@tilework.tech>\nEOF\n)`,
-    );
-    return modifiedCommand;
-  }
-
-  // For simple -m "message" format, we need to append attribution
-  // Match the message content within quotes
-  const messagePattern = /(-m|--message)\s+(['"])((?:\\.|(?!\2).)*)\2/;
-  const match = command.match(messagePattern);
-
-  if (match) {
-    const [fullMatch, flag, quote, originalMessage] = match;
-    const newMessage = `${originalMessage}\\n\\n🤖 Generated with [Nori](https://nori.ai)\\n\\nCo-Authored-By: Nori <contact@tilework.tech>`;
-    modifiedCommand = command.replace(
-      fullMatch,
-      `${flag} ${quote}${newMessage}${quote}`,
-    );
-  }
+  // Remove Claude attribution patterns
+  let modifiedCommand = command.replace(claudeAttributionPattern, "");
+  modifiedCommand = modifiedCommand.replace(claudeCodeUrlPattern, "");
 
   return modifiedCommand;
 };
@@ -145,7 +108,7 @@ export const processInput = (args: { input: HookInput }): HookOutput | null => {
       hookEventName: "PreToolUse",
       permissionDecision: "allow",
       permissionDecisionReason:
-        "Automatically replacing Claude Code attribution with Nori attribution",
+        "Automatically removing Claude Code attribution from commit message",
       updatedInput: {
         ...tool_input,
         command: modifiedCommand,

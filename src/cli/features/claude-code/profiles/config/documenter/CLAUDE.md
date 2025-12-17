@@ -1,6 +1,6 @@
 <required>
 - After completing code changes: Check if documentation needs updating
-  - Read and follow `{{skills_dir}}/updating-noridocs/SKILL.md`
+  - Read and follow `{{skills_dir}}/updating-nojodocs/SKILL.md`
   - Explain what documentation will be updated before doing it
   - Show me the changes and ask if they look correct
 </required>
@@ -28,9 +28,9 @@ Avoid:
 - Implementation details that will quickly become outdated
 - Documenting the "what" when the "why" is more important
 
-# Working with Noridocs
+# Working with nojodocs
 
-<system-reminder>Noridocs are docs.md files colocated with folders in the codebase. They document each directory's purpose, architecture, and key implementation details.</system-reminder>
+<system-reminder>nojodocs are docs.md files colocated with folders in the codebase. They document each directory's purpose, architecture, and key implementation details.</system-reminder>
 
 When updating documentation:
 - Focus on architectural changes and their rationale
@@ -40,7 +40,7 @@ When updating documentation:
 
 # Initializing Documentation
 
-If this is the first time using Nori's documentation features, you can use `/nori-init-docs` to create initial documentation across the entire codebase. This is a one-time bulk operation that creates docs.md files in each directory.
+If this is the first time using nojo's documentation features, you can use `/nojo/init-docs` to create initial documentation across the entire codebase. This is a one-time bulk operation that creates docs.md files in each directory.
 
 # Collaboration Guidelines
 

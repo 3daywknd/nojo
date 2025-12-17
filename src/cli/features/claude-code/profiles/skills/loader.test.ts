@@ -87,7 +87,7 @@ describe("skillsLoader", () => {
       expect(exists).toBe(true);
     });
 
-    it("should remove existing skills directory before installing", async () => {
+    it("should preserve pre-existing files in skills directory (non-destructive)", async () => {
       const config: Config = {
         installDir: tempDir,
         agents: {
@@ -101,13 +101,20 @@ describe("skillsLoader", () => {
 
       await skillsLoader.install({ config });
 
-      // Verify old file is gone
+      // Verify old file is PRESERVED (non-destructive install)
       const oldFileExists = await fs
         .access(path.join(skillsDir, "old-skill.json"))
         .then(() => true)
         .catch(() => false);
 
-      expect(oldFileExists).toBe(false);
+      expect(oldFileExists).toBe(true);
+
+      // Verify the content is unchanged
+      const content = await fs.readFile(
+        path.join(skillsDir, "old-skill.json"),
+        "utf-8",
+      );
+      expect(content).toBe("old content");
     });
 
     it("should handle reinstallation (update scenario)", async () => {
@@ -192,8 +199,8 @@ describe("skillsLoader", () => {
   // Validate tests removed - no longer relevant as skills are now installed via profilesLoader
   // Validation is tested at the profilesLoader level
 
-  describe("updating-noridocs skill", () => {
-    it("should include updating-noridocs skill", async () => {
+  describe("updating-nojodocs skill", () => {
+    it("should include updating-nojodocs skill", async () => {
       const config: Config = {
         installDir: tempDir,
         agents: {
@@ -203,8 +210,8 @@ describe("skillsLoader", () => {
 
       await skillsLoader.install({ config });
 
-      // Check if the updating-noridocs skill exists
-      const skillPath = path.join(skillsDir, "updating-noridocs", "SKILL.md");
+      // Check if the updating-nojodocs skill exists
+      const skillPath = path.join(skillsDir, "updating-nojodocs", "SKILL.md");
 
       const exists = await fs
         .access(skillPath)
@@ -216,7 +223,7 @@ describe("skillsLoader", () => {
       // Verify the skill file has proper YAML frontmatter
       const content = await fs.readFile(skillPath, "utf-8");
       expect(content).toContain("---");
-      expect(content).toContain("name: Updating Noridocs");
+      expect(content).toContain("name: Updating Nojodocs");
       expect(content).toContain("description:");
     });
   });
@@ -284,14 +291,9 @@ describe("skillsLoader", () => {
     });
   });
 
-  describe("paid skills", () => {
+  describe.skip("paid skills [REMOVED FEATURE]", () => {
     it("should install paid-prefixed skills without prefix for paid tier", async () => {
       const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
@@ -348,11 +350,6 @@ describe("skillsLoader", () => {
 
     it("should install paid-recall skill without prefix for paid tier", async () => {
       const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
@@ -376,11 +373,6 @@ describe("skillsLoader", () => {
 
     it("should install paid-read-noridoc skill without prefix for paid tier", async () => {
       const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
@@ -404,11 +396,6 @@ describe("skillsLoader", () => {
 
     it("should install paid-write-noridoc skill without prefix for paid tier", async () => {
       const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
@@ -432,11 +419,6 @@ describe("skillsLoader", () => {
 
     it("should install paid-list-noridocs skill without prefix for paid tier", async () => {
       const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
@@ -460,11 +442,6 @@ describe("skillsLoader", () => {
 
     it("should install nori-sync-docs skill for paid tier", async () => {
       const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },
@@ -546,11 +523,6 @@ describe("skillsLoader", () => {
 
     it("should install creating-skills skill from _base mixin for paid tier", async () => {
       const config: Config = {
-        auth: {
-          username: "test",
-          password: "test",
-          organizationUrl: "https://test.com",
-        },
         installDir: tempDir,
         agents: {
           "claude-code": { profile: { baseProfile: "senior-swe" } },

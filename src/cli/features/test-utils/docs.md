@@ -1,4 +1,4 @@
-# Noridoc: test-utils
+# nojo-doc: test-utils
 
 Path: @/src/cli/features/test-utils
 
@@ -46,4 +46,4 @@ Test Files (*.test.ts)
 
 **Cleanup responsibility.** Tests using `createTempTestContext` must call `cleanup()` in an `afterEach` hook to avoid leaving temp directories on disk.
 
-Created and maintained by Nori.
+Created and maintained by nojo.

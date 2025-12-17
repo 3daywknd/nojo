@@ -1,5 +1,5 @@
 /**
- * Version tracking utilities for Nori Profiles installer
+ * Version tracking utilities for nojo installer
  *
  * Manages version tracking to ensure proper uninstallation of previous versions
  * before installing new versions.
@@ -24,7 +24,7 @@ const MIN_AGENT_FLAG_VERSION = "19.0.0";
 
 /**
  * Find the package root by walking up from the start directory
- * looking for package.json with name "nori-ai"
+ * looking for package.json with name "nojo"
  *
  * @param args - Configuration arguments
  * @param args.startDir - Directory to start searching from
@@ -43,7 +43,7 @@ const findPackageRoot = (args: { startDir: string }): string | null => {
     if (existsSync(packageJsonPath)) {
       try {
         const pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-        if (pkg.name === "nori-ai") {
+        if (pkg.name === "nojo") {
           return currentDir;
         }
       } catch {
@@ -79,8 +79,8 @@ export const getCurrentPackageVersion = (args?: {
   try {
     const packageJsonPath = join(packageRoot, "package.json");
     const pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-    // Verify it's the nori-ai package
-    if (pkg.name === "nori-ai") {
+    // Verify it's the nojo package
+    if (pkg.name === "nojo") {
       return pkg.version;
     }
     return null;
@@ -90,8 +90,8 @@ export const getCurrentPackageVersion = (args?: {
 };
 
 /**
- * Get the installed version from .nori-config.json
- * Falls back to reading from deprecated .nori-installed-version file if config has no version.
+ * Get the installed version from .nojo-config.json
+ * Falls back to reading from deprecated .nojo-installed-version file if config has no version.
  * Throws an error if version cannot be detected from either source.
  *
  * @param args - Configuration arguments
@@ -112,8 +112,8 @@ export const getInstalledVersion = async (args: {
     return config.version;
   }
 
-  // Try fallback to deprecated .nori-installed-version file
-  const versionFilePath = join(installDir, ".nori-installed-version");
+  // Try fallback to deprecated .nojo-installed-version file
+  const versionFilePath = join(installDir, ".nojo-installed-version");
   if (existsSync(versionFilePath)) {
     const fileContent = readFileSync(versionFilePath, "utf-8").trim();
     if (semver.valid(fileContent) != null) {
@@ -122,7 +122,7 @@ export const getInstalledVersion = async (args: {
   }
 
   throw new Error(
-    "Installation out of date: no version field found in .nori-config.json file.",
+    "Installation out of date: no version field found in .nojo-config.json file.",
   );
 };
 

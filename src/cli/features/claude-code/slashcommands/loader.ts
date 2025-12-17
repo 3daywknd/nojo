@@ -1,6 +1,6 @@
 /**
  * Global slash commands feature loader
- * Registers profile-agnostic Nori slash commands with Claude Code
+ * Registers profile-agnostic nojo slash commands with Claude Code
  * These commands are installed to ~/.claude/commands/ independent of profiles
  */
 
@@ -46,7 +46,7 @@ const registerSlashCommands = async (args: {
   config: Config;
 }): Promise<void> => {
   const { config: _config } = args;
-  info({ message: "Registering global Nori slash commands..." });
+  info({ message: "Registering global nojo slash commands..." });
 
   const claudeCommandsDir = getClaudeHomeCommandsDir();
 
@@ -91,7 +91,7 @@ const unregisterSlashCommands = async (args: {
   config: Config;
 }): Promise<void> => {
   const { config: _config } = args;
-  info({ message: "Removing global Nori slash commands..." });
+  info({ message: "Removing global nojo slash commands..." });
 
   let removedCount = 0;
 
@@ -153,7 +153,7 @@ const validate = async (args: {
     await fs.access(claudeCommandsDir);
   } catch {
     errors.push(`Commands directory not found at ${claudeCommandsDir}`);
-    errors.push('Run "nori-ai install" to create the commands directory');
+    errors.push('Run "nojo install" to create the commands directory');
     return {
       valid: false,
       message: "Commands directory not found",
@@ -180,7 +180,7 @@ const validate = async (args: {
     errors.push(
       `Missing ${missingCommands.length} global slash command(s): ${missingCommands.join(", ")}`,
     );
-    errors.push('Run "nori-ai install" to register missing commands');
+    errors.push('Run "nojo install" to register missing commands');
     return {
       valid: false,
       message: "Some global slash commands are missing",
@@ -200,7 +200,7 @@ const validate = async (args: {
  */
 export const globalSlashCommandsLoader: Loader = {
   name: "slashcommands",
-  description: "Global Nori slash commands",
+  description: "Global nojo slash commands",
   run: async (args: { config: Config }) => {
     const { config } = args;
     await registerSlashCommands({ config });

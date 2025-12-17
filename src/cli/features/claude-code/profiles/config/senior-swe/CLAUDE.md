@@ -1,23 +1,23 @@
 <required>
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
-- Announce "Following Nori workflow..." to the user
+- Announce "Following nojo workflow..." to the user
 - Read `{{skills_dir}}/using-skills/SKILL.md`
 - Check git status - are you on main?
   - If yes: ask me if I want to create a branch or a worktree.
   - If creating a worktree, read and follow `{{skills_dir}}/using-git-worktrees/SKILL.md` to automatically create a worktree. Derive the branch name from my request.
-- Ask me to pick a mode: nori-copilot or nori-full-send.
-<system-reminder>In nori-copilot mode, the agent works closely with me, asks lots of questions, and only does small pieces of work at a time.</system-reminder>
-<system-reminder>In nori-full-send mode, the agent works with me to create a plan, and then operates autonomously until work is completed.</system-reminder>
+- Ask me to pick a mode: nojo-copilot or nojo-full-send.
+<system-reminder>In nojo-copilot mode, the agent works closely with me, asks lots of questions, and only does small pieces of work at a time.</system-reminder>
+<system-reminder>In nojo-full-send mode, the agent works with me to create a plan, and then operates autonomously until work is completed.</system-reminder>
 - Based on the mode, add the rest of the steps below to your Todo list using TodoWrite.
 </required>
 
-# Nori Copilot Mode
+# nojo Copilot Mode
 
 <required>
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
 - Research how to best solve my question WITHOUT making code changes.
   - Search for relevant skills using Glob/Grep in `{{skills_dir}}/`
-  - If you have access to the nori-knowledge-researcher subagent, use it at least once.
+  - If you have access to the nojo-knowledge-researcher subagent, use it at least once.
   - You can run many research subagents in parallel.
 - Read and follow `{{skills_dir}}/writing-plans/SKILL.md`
 - Present plan to me and ask for feedback.
@@ -26,27 +26,27 @@
 - Ask if me wants to follow test driven development.
   - If yes: use test driven development. Read and follow `{{skills_dir}}/test-driven-development/SKILL.md`
 - Ask if me wants to update docs.
-  - If yes: update documentation, INCLUDING out of date documentation. Read and follow `{{skills_dir}}/updating-noridocs/SKILL.md`
+  - If yes: update documentation, INCLUDING out of date documentation. Read and follow `{{skills_dir}}/updating-nojodocs/SKILL.md`
 - Ask if me wants to create a PR.
   - If yes: read and follow `{{skills_dir}}/finishing-a-development-branch/SKILL.md`
 </required>
 
-# Nori Full-send Mode
+# nojo Full-send Mode
 
 <required>
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
 - Research how to best solve my question WITHOUT making code changes.
   - Search for relevant skills using Glob/Grep in `{{skills_dir}}/`
-  - If you have access to the nori-knowledge-researcher subagent, use it at least once.
+  - If you have access to the nojo-knowledge-researcher subagent, use it at least once.
   - You can run many research subagents in parallel.
 - Read and follow `{{skills_dir}}/writing-plans/SKILL.md`
 - Present plan to me and ask for feedback.
   - If I have feedback, modify the plan. Repeat until I approve.
 - Check if the codebase uses tests.
   - If yes: use test driven development. Read and follow `{{skills_dir}}/test-driven-development/SKILL.md`
-- Check if the codebase uses noridocs.
-<system-reminder>noridocs are docs.md files colocated with folders in the codebase.</system-reminder>
-    If yes: update documentation, INCLUDING out of date documentation. Read and follow `{{skills_dir}}/updating-noridocs/SKILL.md`
+- Check if the codebase uses nojodocs.
+<system-reminder>nojodocs are docs.md files colocated with folders in the codebase.</system-reminder>
+    If yes: update documentation, INCLUDING out of date documentation. Read and follow `{{skills_dir}}/updating-nojodocs/SKILL.md`
 - Finish development with final checks. Read and follow `{{skills_dir}}/finishing-a-development-branch/SKILL.md`
 </required>
 

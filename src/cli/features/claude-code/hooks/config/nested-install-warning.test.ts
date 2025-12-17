@@ -62,17 +62,17 @@ describe("nested-install-warning hook", () => {
 
     // Create nori configs in grandparent and parent
     fs.writeFileSync(
-      path.join(grandparentDir, ".nori-config.json"),
+      path.join(grandparentDir, ".nojo-config.json"),
       JSON.stringify({ profile: { baseProfile: "test" } }),
     );
     fs.writeFileSync(
-      path.join(parentDir, ".nori-config.json"),
+      path.join(parentDir, ".nojo-config.json"),
       JSON.stringify({ profile: { baseProfile: "test" } }),
     );
 
     // Create nori config in child (current installation)
     fs.writeFileSync(
-      path.join(childDir, ".nori-config.json"),
+      path.join(childDir, ".nojo-config.json"),
       JSON.stringify({
         profile: { baseProfile: "test" },
         installDir: path.join(childDir, ".claude"),
@@ -89,7 +89,7 @@ describe("nested-install-warning hook", () => {
     expect(output.systemMessage).toContain("⚠️");
     expect(output.systemMessage).toContain(parentDir);
     expect(output.systemMessage).toContain(grandparentDir);
-    expect(output.systemMessage).toContain("nori-ai uninstall");
+    expect(output.systemMessage).toContain("nojo uninstall");
   });
 
   it("should output nothing when no ancestor installation exists", async () => {
@@ -99,7 +99,7 @@ describe("nested-install-warning hook", () => {
 
     // Create nori config in child only
     fs.writeFileSync(
-      path.join(childDir, ".nori-config.json"),
+      path.join(childDir, ".nojo-config.json"),
       JSON.stringify({
         profile: { baseProfile: "test" },
         installDir: path.join(childDir, ".claude"),
@@ -134,7 +134,7 @@ describe("nested-install-warning hook", () => {
 
     // Only parent has nori config
     fs.writeFileSync(
-      path.join(parentDir, ".nori-config.json"),
+      path.join(parentDir, ".nojo-config.json"),
       JSON.stringify({ profile: { baseProfile: "test" } }),
     );
 
@@ -153,13 +153,13 @@ describe("nested-install-warning hook", () => {
 
     // Create installation in parent (simulating ~)
     fs.writeFileSync(
-      path.join(parentDir, ".nori-config.json"),
+      path.join(parentDir, ".nojo-config.json"),
       JSON.stringify({ profile: { baseProfile: "test" } }),
     );
 
     // Create installation in child (simulating ~/foo/bar)
     fs.writeFileSync(
-      path.join(childDir, ".nori-config.json"),
+      path.join(childDir, ".nojo-config.json"),
       JSON.stringify({
         profile: { baseProfile: "test" },
         installDir: path.join(childDir, ".claude"),
@@ -174,7 +174,7 @@ describe("nested-install-warning hook", () => {
     const output = JSON.parse(consoleOutput[0]);
     expect(output).toHaveProperty("systemMessage");
     expect(output.systemMessage).toContain("⚠️");
-    expect(output.systemMessage).toContain("Nested Nori Installation");
+    expect(output.systemMessage).toContain("Nested nojo Installation");
     // Should show both installation locations
     expect(output.systemMessage).toContain(parentDir);
     expect(output.systemMessage).toContain(childDir);

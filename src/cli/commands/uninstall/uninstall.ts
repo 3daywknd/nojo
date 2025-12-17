@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * Nori Profiles Uninstaller
+ * nojo Uninstaller
  *
- * Removes all features installed by the Nori Profiles installer.
+ * Removes all features installed by the nojo installer.
  */
 
 import * as fs from "fs/promises";
 import * as path from "path";
 
-import { trackEvent } from "@/cli/analytics.js";
-import { loadConfig, isPaidInstall, getInstalledAgents } from "@/cli/config.js";
+import { loadConfig, getInstalledAgents } from "@/cli/config.js";
 import { AgentRegistry } from "@/cli/features/agentRegistry.js";
 import { error, success, info, warn, newline } from "@/cli/logger.js";
 import { promptUser } from "@/cli/prompt.js";
@@ -77,14 +76,14 @@ export const generatePromptConfig = async (args: {
       // No installation found anywhere
       info({
         message:
-          "No Nori installation found in current or ancestor directories.",
+          "No nojo installation found in current or ancestor directories.",
       });
       return null;
     }
 
     if (ancestors.length === 1) {
       // One ancestor found
-      info({ message: "No Nori installation found in current directory." });
+      info({ message: "No nojo installation found in current directory." });
       info({
         message: `Found installation in ancestor directory: ${ancestors[0]}`,
       });
@@ -103,7 +102,7 @@ export const generatePromptConfig = async (args: {
       installDir = ancestors[0];
     } else {
       // Multiple ancestors found
-      info({ message: "No Nori installation found in current directory." });
+      info({ message: "No nojo installation found in current directory." });
       info({ message: "Found installations in ancestor directories:" });
       for (let i = 0; i < ancestors.length; i++) {
         info({ message: `  ${i + 1}. ${ancestors[i]}` });
@@ -134,11 +133,11 @@ export const generatePromptConfig = async (args: {
     }
   }
 
-  info({ message: "Nori Profiles Uninstaller" });
+  info({ message: "nojo Uninstaller" });
   info({ message: `Uninstalling from: ${installDir}` });
   newline();
   warn({
-    message: "This will remove Nori Profiles features from your system.",
+    message: "This will remove nojo features from your system.",
   });
   newline();
 
@@ -193,15 +192,6 @@ export const generatePromptConfig = async (args: {
     }
   }
 
-  if (existingConfig?.auth) {
-    info({ message: "Found paid mode configuration:" });
-    info({ message: `  Username: ${existingConfig.auth.username}` });
-    info({
-      message: `  Organization URL: ${existingConfig.auth.organizationUrl}`,
-    });
-    newline();
-  }
-
   // Get the agent's loaders to show what will be removed
   const agentImpl = AgentRegistry.getInstance().get({ name: selectedAgent });
   const registry = agentImpl.getLoaderRegistry();
@@ -237,10 +227,10 @@ export const generatePromptConfig = async (args: {
     globalLoaders.map((l) => l.humanReadableName),
   );
   warn({
-    message: `Global settings (${featureList}) are shared across all Nori installations.`,
+    message: `Global settings (${featureList}) are shared across all nojo installations.`,
   });
   info({
-    message: "If you have other Nori installations, you may want to keep them.",
+    message: "If you have other nojo installations, you may want to keep them.",
   });
   newline();
 
@@ -281,7 +271,7 @@ const cleanupNotificationsLog = async (args: {
  * Core uninstall logic (can be called programmatically)
  * Preserves config file by default (for upgrades). Only removes config when removeConfig=true.
  * In non-interactive mode, global settings (hooks, statusline, and global slashcommands) are
- * NOT removed from ~/.claude to avoid breaking other Nori installations.
+ * NOT removed from ~/.claude to avoid breaking other nojo installations.
  * @param args - Configuration arguments
  * @param args.removeConfig - Whether to remove the config file (default: false)
  * @param args.removeGlobalSettings - Whether to remove hooks, statusline, and global slashcommands from ~/.claude (default: false)
@@ -322,14 +312,6 @@ export const runUninstall = async (args: {
   if (installedVersion) {
     info({ message: `Uninstalling version: ${installedVersion}` });
   }
-
-  // Track uninstallation start
-  trackEvent({
-    eventName: "plugin_uninstall_started",
-    eventParams: {
-      install_type: isPaidInstall({ config }) ? "paid" : "free",
-    },
-  });
 
   // Load all feature loaders in reverse order for uninstall
   // During install, profiles must run first to create profile directories.
@@ -388,18 +370,10 @@ export const runUninstall = async (args: {
         message: "Configuration files have been preserved for these agents.",
       });
       info({
-        message: `To uninstall remaining agents, run: nori-ai uninstall --agent ${remainingAgents[0]}`,
+        message: `To uninstall remaining agents, run: nojo uninstall --agent ${remainingAgents[0]}`,
       });
     }
   }
-
-  // Track uninstallation completion
-  trackEvent({
-    eventName: "plugin_uninstall_completed",
-    eventParams: {
-      install_type: isPaidInstall({ config }) ? "paid" : "free",
-    },
-  });
 };
 
 /**
@@ -442,7 +416,7 @@ export const interactive = async (args?: {
       "======================================================================",
   });
   success({
-    message: "       Nori Profiles Uninstallation Complete!              ",
+    message: "       nojo Uninstallation Complete!              ",
   });
   success({
     message:
@@ -458,7 +432,7 @@ export const interactive = async (args?: {
   });
   newline();
   info({
-    message: "To completely remove the package, run: npm uninstall -g nori-ai",
+    message: "To completely remove the package, run: npm uninstall -g nojo",
   });
 };
 
@@ -511,7 +485,7 @@ export const noninteractive = async (args?: {
       "======================================================================",
   });
   success({
-    message: "       Nori Profiles Uninstallation Complete!              ",
+    message: "       nojo Uninstallation Complete!              ",
   });
   success({
     message:
@@ -527,7 +501,7 @@ export const noninteractive = async (args?: {
   });
   newline();
   info({
-    message: "To completely remove the package, run: npm uninstall -g nori-ai",
+    message: "To completely remove the package, run: npm uninstall -g nojo",
   });
 };
 
@@ -568,7 +542,7 @@ export const registerUninstallCommand = (args: { program: Command }): void => {
 
   program
     .command("uninstall")
-    .description("Uninstall Nori Profiles")
+    .description("Uninstall nojo")
     .action(async () => {
       // Get global options from parent
       const globalOpts = program.opts();

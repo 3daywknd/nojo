@@ -11,7 +11,7 @@ Code review requires technical evaluation, not emotional performance.
 
 **Core principle:** Fetch feedback → Verify → Implement → Re-test → Push updates.
 
-**Announce at start:** "I'm using the Nori Receiving Code Review skill to handle this feedback."
+**Announce at start:** "I'm using the nojo Receiving Code Review skill to handle this feedback."
 
 ## The Process
 

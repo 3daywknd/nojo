@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Hook handler for warning about nested Nori installations
+ * Hook handler for warning about nested nojo installations
  *
  * This script is called by Claude Code SessionStart hook.
- * It checks for Nori installations in ancestor directories and warns the user.
+ * It checks for nojo installations in ancestor directories and warns the user.
  */
 
 import { error } from "@/cli/logger.js";
@@ -45,12 +45,12 @@ export const main = async (args?: {
     }
 
     // Build warning message
-    let message = "⚠️ **Nested Nori Installation Detected**\n\n";
+    let message = "⚠️ **Nested nojo Installation Detected**\n\n";
     message +=
       "Claude Code loads CLAUDE.md files from all parent directories. ";
     message +=
-      "Having multiple Nori installations can cause duplicate or conflicting configurations.\n\n";
-    message += "**All Nori installations found:**\n";
+      "Having multiple nojo installations can cause duplicate or conflicting configurations.\n\n";
+    message += "**All nojo installations found:**\n";
 
     for (const installPath of allInstallations) {
       message += `- ${installPath}\n`;
@@ -58,7 +58,7 @@ export const main = async (args?: {
 
     message += "\n**To remove an installation, run:**\n";
     for (const installPath of allInstallations) {
-      message += `\`cd ${installPath} && nori-ai uninstall\`\n`;
+      message += `\`cd ${installPath} && nojo uninstall\`\n`;
     }
 
     // Output to Claude session

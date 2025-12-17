@@ -1,23 +1,38 @@
 /**
  * Skills feature loader
- * Installs skill configuration files to ~/.claude/nori/skills/
+ * Installs skill configuration files to ~/.claude/skills/
+ *
+ * This loader is manifest-aware and non-destructive:
+ * - User-modified skills are preserved during updates
+ * - Pre-existing skills (before nojo install) are preserved
+ * - Only nojo-managed, unmodified skills are updated
  */
 
 import * as fs from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { isPaidInstall, getAgentProfile, type Config } from "@/cli/config.js";
+import { getAgentProfile, type Config } from "@/cli/config.js";
 import {
   getClaudeDir,
   getClaudeSkillsDir,
   getClaudeSettingsFile,
 } from "@/cli/features/claude-code/paths.js";
 import { substituteTemplatePaths } from "@/cli/features/claude-code/template.js";
+import {
+  loadManifest,
+  saveManifest,
+  computeFileHash,
+  addToManifest,
+  getManifestEntry,
+  createManifest,
+} from "@/cli/features/manifest/manifest.js";
 import { success, info, warn } from "@/cli/logger.js";
+import { getCurrentPackageVersion } from "@/cli/version.js";
 
 import type { ValidationResult } from "@/cli/features/agentRegistry.js";
 import type { ProfileLoader } from "@/cli/features/claude-code/profiles/profileLoaderRegistry.js";
+import type { Manifest } from "@/cli/features/manifest/types.js";
 import type { Dirent } from "fs";
 
 // Get directory of this loader file
@@ -25,44 +40,119 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Copy a directory recursively, applying template substitution to markdown files
+ * Check if a file exists
+ * @param filePath - Path to check
+ *
+ * @returns True if file exists, false otherwise
+ */
+const fileExists = async (filePath: string): Promise<boolean> => {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Copy a directory recursively with manifest tracking
  *
  * @param args - Copy arguments
  * @param args.src - Source directory path
  * @param args.dest - Destination directory path
  * @param args.installDir - Installation directory for template substitution
+ * @param args.manifest - Manifest to track installed files
+ * @param args.profileName - Profile name for manifest tracking
+ *
+ * @returns Object with counts of preserved and installed files
  */
-const copyDirWithTemplateSubstitution = async (args: {
+const copyDirWithManifestTracking = async (args: {
   src: string;
   dest: string;
   installDir: string;
-}): Promise<void> => {
-  const { src, dest, installDir } = args;
+  manifest: Manifest;
+  profileName: string;
+}): Promise<{ preserved: number; installed: number }> => {
+  const { src, dest, installDir, manifest, profileName } = args;
+  let preserved = 0;
+  let installed = 0;
 
   await fs.mkdir(dest, { recursive: true });
 
   const entries = await fs.readdir(src, { withFileTypes: true });
+  const version = getCurrentPackageVersion() ?? "unknown";
 
   for (const entry of entries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
+    const relativePath = path.relative(installDir, destPath);
 
     if (entry.isDirectory()) {
-      await copyDirWithTemplateSubstitution({
+      const subResult = await copyDirWithManifestTracking({
         src: srcPath,
         dest: destPath,
         installDir,
+        manifest,
+        profileName,
       });
-    } else if (entry.name.endsWith(".md")) {
-      // Apply template substitution to markdown files
-      const content = await fs.readFile(srcPath, "utf-8");
-      const substituted = substituteTemplatePaths({ content, installDir });
-      await fs.writeFile(destPath, substituted);
+      preserved += subResult.preserved;
+      installed += subResult.installed;
     } else {
-      // Copy other files directly
-      await fs.copyFile(srcPath, destPath);
+      // Get the content that would be written
+      let newContent: string;
+      if (entry.name.endsWith(".md")) {
+        const content = await fs.readFile(srcPath, "utf-8");
+        newContent = substituteTemplatePaths({ content, installDir });
+      } else {
+        newContent = await fs.readFile(srcPath, "utf-8");
+      }
+
+      // Check if file exists and whether to preserve it
+      const destExists = await fileExists(destPath);
+      const manifestEntry = getManifestEntry({ manifest, path: relativePath });
+
+      if (destExists) {
+        if (manifestEntry != null) {
+          // File is tracked by manifest - check if user modified it
+          const currentHash = await computeFileHash({ filePath: destPath });
+          if (currentHash !== manifestEntry.hash) {
+            // User modified a nojo-managed file - PRESERVE
+            info({ message: `  Preserving user-modified: ${entry.name}` });
+            preserved++;
+            continue;
+          }
+          // Not modified - safe to update
+        } else {
+          // File exists but not in manifest - pre-existing or user-created
+          // PRESERVE
+          info({ message: `  Preserving existing: ${entry.name}` });
+          preserved++;
+          continue;
+        }
+      }
+
+      // Safe to install/update
+      if (entry.name.endsWith(".md")) {
+        await fs.writeFile(destPath, newContent);
+      } else {
+        await fs.copyFile(srcPath, destPath);
+      }
+
+      // Track in manifest
+      const newHash = await computeFileHash({ filePath: destPath });
+      addToManifest({
+        manifest,
+        path: relativePath,
+        hash: newHash,
+        source: "nojo",
+        profile: profileName,
+        version,
+      });
+      installed++;
     }
   }
+
+  return { preserved, installed };
 };
 
 /**
@@ -84,34 +174,43 @@ const getConfigDir = (args: {
 };
 
 /**
- * Install skills
+ * Install skills (non-destructive)
+ *
+ * This function preserves:
+ * - User-modified skills (detected via manifest hash comparison)
+ * - Pre-existing skills (files not in manifest)
+ *
  * @param args - Configuration arguments
  * @param args.config - Runtime configuration
  */
 const installSkills = async (args: { config: Config }): Promise<void> => {
   const { config } = args;
-  info({ message: "Installing Nori skills..." });
+  info({ message: "Installing nojo skills..." });
 
   // Get profile name from config - error if not configured
-  const profileName = getAgentProfile({
+  const maybeProfileName = getAgentProfile({
     config,
     agentName: "claude-code",
   })?.baseProfile;
-  if (profileName == null) {
+  if (maybeProfileName == null) {
     throw new Error(
-      "No profile configured for claude-code. Run 'nori-ai install' to configure a profile.",
+      "No profile configured for claude-code. Run 'nojo install' to configure a profile.",
     );
   }
+  const profileName: string = maybeProfileName;
   const configDir = getConfigDir({
     profileName,
     installDir: config.installDir,
   });
   const claudeSkillsDir = getClaudeSkillsDir({ installDir: config.installDir });
 
-  // Remove existing skills directory if it exists
-  await fs.rm(claudeSkillsDir, { recursive: true, force: true });
+  // Load or create manifest
+  const existingManifest = await loadManifest({
+    installDir: config.installDir,
+  });
+  const manifest: Manifest = existingManifest ?? createManifest();
 
-  // Create skills directory
+  // Create skills directory if it doesn't exist
   await fs.mkdir(claudeSkillsDir, { recursive: true });
 
   // Read all entries from config directory
@@ -125,12 +224,36 @@ const installSkills = async (args: { config: Config }): Promise<void> => {
     return;
   }
 
+  let totalPreserved = 0;
+  let totalInstalled = 0;
+  const version = getCurrentPackageVersion() ?? "unknown";
+
   for (const entry of entries) {
     const sourcePath = path.join(configDir, entry.name);
 
     if (!entry.isDirectory()) {
-      // Copy non-directory files (like docs.md) with template substitution if markdown
+      // Handle non-directory files (like docs.md) with manifest tracking
       const destPath = path.join(claudeSkillsDir, entry.name);
+      const relativePath = path.relative(config.installDir, destPath);
+      const destExists = await fileExists(destPath);
+      const manifestEntry = getManifestEntry({ manifest, path: relativePath });
+
+      if (destExists) {
+        if (manifestEntry != null) {
+          const currentHash = await computeFileHash({ filePath: destPath });
+          if (currentHash !== manifestEntry.hash) {
+            info({ message: `  Preserving user-modified: ${entry.name}` });
+            totalPreserved++;
+            continue;
+          }
+        } else {
+          info({ message: `  Preserving existing: ${entry.name}` });
+          totalPreserved++;
+          continue;
+        }
+      }
+
+      // Safe to install
       if (entry.name.endsWith(".md")) {
         const content = await fs.readFile(sourcePath, "utf-8");
         const substituted = substituteTemplatePaths({
@@ -141,6 +264,17 @@ const installSkills = async (args: { config: Config }): Promise<void> => {
       } else {
         await fs.copyFile(sourcePath, destPath);
       }
+
+      const newHash = await computeFileHash({ filePath: destPath });
+      addToManifest({
+        manifest,
+        path: relativePath,
+        hash: newHash,
+        source: "nojo",
+        profile: profileName,
+        version,
+      });
+      totalInstalled++;
       continue;
     }
 
@@ -155,29 +289,46 @@ const installSkills = async (args: { config: Config }): Promise<void> => {
     // @see scripts/bundle-skills.ts - The bundler that creates standalone scripts
     // @see src/cli/features/claude-code/profiles/config/_mixins/_paid/skills/paid-recall/script.ts - Bundling docs
     if (entry.name.startsWith("paid-")) {
-      if (isPaidInstall({ config })) {
+      if (false) {
         // Strip paid- prefix when copying
         const destName = entry.name.replace(/^paid-/, "");
         const destPath = path.join(claudeSkillsDir, destName);
-        await copyDirWithTemplateSubstitution({
+        const result = await copyDirWithManifestTracking({
           src: sourcePath,
           dest: destPath,
           installDir: config.installDir,
+          manifest,
+          profileName,
         });
+        totalPreserved += result.preserved;
+        totalInstalled += result.installed;
       }
       // Skip if free tier
     } else {
       // Copy non-paid skills for all tiers
       const destPath = path.join(claudeSkillsDir, entry.name);
-      await copyDirWithTemplateSubstitution({
+      const result = await copyDirWithManifestTracking({
         src: sourcePath,
         dest: destPath,
         installDir: config.installDir,
+        manifest,
+        profileName,
       });
+      totalPreserved += result.preserved;
+      totalInstalled += result.installed;
     }
   }
 
-  success({ message: "✓ Installed skills" });
+  // Save updated manifest
+  await saveManifest({ installDir: config.installDir, manifest });
+
+  if (totalPreserved > 0) {
+    success({
+      message: `✓ Installed skills (${totalInstalled} installed, ${totalPreserved} preserved)`,
+    });
+  } else {
+    success({ message: `✓ Installed ${totalInstalled} skills` });
+  }
 
   // Configure permissions for skills directory
   await configureSkillsPermissions({ config });
@@ -243,7 +394,7 @@ const configureSkillsPermissions = async (args: {
  */
 const uninstallSkills = async (args: { config: Config }): Promise<void> => {
   const { config } = args;
-  info({ message: "Removing Nori skills..." });
+  info({ message: "Removing nojo skills..." });
 
   const claudeSkillsDir = getClaudeSkillsDir({ installDir: config.installDir });
 
@@ -330,7 +481,7 @@ const validate = async (args: {
     await fs.access(claudeSkillsDir);
   } catch {
     errors.push(`Skills directory not found at ${claudeSkillsDir}`);
-    errors.push('Run "nori-ai install" to install skills');
+    errors.push('Run "nojo install" to install skills');
     return {
       valid: false,
       message: "Skills directory not found",
@@ -345,7 +496,7 @@ const validate = async (args: {
   })?.baseProfile;
   if (profileName == null) {
     errors.push("No profile configured for claude-code");
-    errors.push("Run 'nori-ai install' to configure a profile");
+    errors.push("Run 'nojo install' to configure a profile");
     return {
       valid: false,
       message: "No profile configured",
@@ -368,7 +519,7 @@ const validate = async (args: {
 
       // For paid-prefixed skills, check if they exist without prefix (paid tier only)
       if (entry.name.startsWith("paid-")) {
-        if (isPaidInstall({ config })) {
+        if (false) {
           const destName = entry.name.replace(/^paid-/, "");
           try {
             await fs.access(path.join(claudeSkillsDir, destName));
@@ -387,7 +538,7 @@ const validate = async (args: {
     }
 
     if (errors.length > 0) {
-      errors.push('Run "nori-ai install" to reinstall skills');
+      errors.push('Run "nojo install" to reinstall skills');
       return {
         valid: false,
         message: "Skills directory incomplete",
@@ -410,7 +561,7 @@ const validate = async (args: {
       errors.push(
         "Skills directory not configured in permissions.additionalDirectories",
       );
-      errors.push('Run "nori-ai install" to configure permissions');
+      errors.push('Run "nojo install" to configure permissions');
       return {
         valid: false,
         message: "Skills permissions not configured",

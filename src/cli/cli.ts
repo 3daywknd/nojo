@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Nori Profiles CLI Router
+ * nojo CLI Router
  *
  * Routes commands to the appropriate installer/uninstaller using commander.js.
  */
@@ -11,10 +11,6 @@ import { Command } from "commander";
 import { registerCheckCommand } from "@/cli/commands/check/check.js";
 import { registerInstallCommand } from "@/cli/commands/install/install.js";
 import { registerInstallLocationCommand } from "@/cli/commands/install-location/installLocation.js";
-import { registerRegistryDownloadCommand } from "@/cli/commands/registry-download/registryDownload.js";
-import { registerRegistrySearchCommand } from "@/cli/commands/registry-search/registrySearch.js";
-import { registerRegistryUpdateCommand } from "@/cli/commands/registry-update/registryUpdate.js";
-import { registerRegistryUploadCommand } from "@/cli/commands/registry-upload/registryUpload.js";
 import { registerSwitchProfileCommand } from "@/cli/commands/switch-profile/profiles.js";
 import { registerUninstallCommand } from "@/cli/commands/uninstall/uninstall.js";
 import { getCurrentPackageVersion } from "@/cli/version.js";
@@ -24,9 +20,9 @@ const program = new Command();
 const version = getCurrentPackageVersion() || "unknown";
 
 program
-  .name("nori-ai")
+  .name("nojo")
   .version(version)
-  .description(`Nori Profiles - Claude Code Configuration Manager v${version}`)
+  .description(`nojo - Claude Code Profile Manager v${version}`)
   .option(
     "-d, --install-dir <path>",
     "Custom installation directory (default: ~/.claude)",
@@ -42,21 +38,13 @@ program
     "after",
     `
 Examples:
-  $ nori-ai install --install-dir ~/my-dir
-  $ nori-ai install --agent claude-code
-  $ nori-ai uninstall
-  $ nori-ai check
-  $ nori-ai install-location
-  $ nori-ai switch-profile senior-swe
-  $ nori-ai registry-search typescript
-  $ nori-ai registry-download my-profile
-  $ nori-ai registry-download my-profile@1.0.0
-  $ nori-ai registry-download my-profile --list-versions
-  $ nori-ai registry-update my-profile
-  $ nori-ai registry-upload my-profile
-  $ nori-ai registry-upload my-profile@1.0.0 --registry https://registry.example.com
-  $ nori-ai --non-interactive install
-  $ nori-ai --silent install
+  $ nojo install --install-dir ~/my-dir
+  $ nojo uninstall
+  $ nojo check
+  $ nojo install-location
+  $ nojo switch-profile senior-swe
+  $ nojo --non-interactive install
+  $ nojo --silent install
 `,
   );
 
@@ -66,10 +54,6 @@ registerUninstallCommand({ program });
 registerCheckCommand({ program });
 registerSwitchProfileCommand({ program });
 registerInstallLocationCommand({ program });
-registerRegistrySearchCommand({ program });
-registerRegistryDownloadCommand({ program });
-registerRegistryUpdateCommand({ program });
-registerRegistryUploadCommand({ program });
 
 program.parse(process.argv);
 

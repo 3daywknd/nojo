@@ -1,20 +1,20 @@
-# Noridoc: config
+# nojo-doc: config
 
 Path: @/src/cli/features/claude-code/statusline/config
 
 ### Overview
 
-Shell script configuration for Claude Code status line integration, displaying git branch, active Nori profile, token usage, cost information, and rotating tips.
+Shell script configuration for Claude Code status line integration, displaying git branch, active nojo profile, token usage, cost information, and rotating tips.
 
 ### How it fits into the larger codebase
 
-This folder contains the nori-statusline.sh source script with {{install_dir}} template placeholders. The loader at @/src/cli/features/claude-code/statusline/loader.ts reads this script, performs template substitution to replace {{install_dir}} with the absolute install directory path, and writes the result to ~/.claude/nori-statusline.sh. The script is executed by Claude Code to generate status line content displayed at the bottom of the interface. It reads Claude Code conversation data from stdin and enriches it with config tier and profile information from .nori-config.json before formatting it for display.
+This folder contains the nori-statusline.sh source script with {{install_dir}} template placeholders. The loader at @/src/cli/features/claude-code/statusline/loader.ts reads this script, performs template substitution to replace {{install_dir}} with the absolute install directory path, and writes the result to ~/.claude/nojo/statusline.sh. The script is executed by Claude Code to generate status line content displayed at the bottom of the interface. It reads Claude Code conversation data from stdin and enriches it with config tier and profile information from .nojo-config.json before formatting it for display.
 
 ### Core Implementation
 
-**Template Variables:** The source script contains INSTALL_DIR="{{install_dir}}" which is replaced during installation with the absolute path to the install root. This templated value is used to locate $INSTALL_DIR/.nori-config.json for reading configuration.
+**Template Variables:** The source script contains INSTALL_DIR="{{install_dir}}" which is replaced during installation with the absolute path to the install root. This templated value is used to locate $INSTALL_DIR/.nojo-config.json for reading configuration.
 
-**Enrichment Phases:** The script performs two enrichment phases before displaying output: (1) Config tier enrichment - reads $INSTALL_DIR/.nori-config.json to determine if auth credentials exist (free vs paid tier), checking both the nested `auth` object format (v19+) and legacy flat format for backwards compatibility, and (2) Profile enrichment - reads profile.baseProfile from $INSTALL_DIR/.nori-config.json (defaults to empty string if not set).
+**Enrichment Phases:** The script performs two enrichment phases before displaying output: (1) Config tier enrichment - reads $INSTALL_DIR/.nojo-config.json to determine if auth credentials exist (free vs paid tier), checking both the nested `auth` object format (v19+) and legacy flat format for backwards compatibility, and (2) Profile enrichment - reads profile.baseProfile from $INSTALL_DIR/.nojo-config.json (defaults to empty string if not set).
 
 **Metrics and Display:** After enrichment, the script extracts git branch info from the conversation's cwd, parses the transcript file to calculate token usage (input tokens, cache creation tokens, cache read tokens, output tokens, and context length from the most recent main chain entry), and formats cost estimates. The script outputs three lines: Line 1 shows metrics (git branch, profile if set, cost, tokens, context, lines changed), Line 2 shows branding with an upgrade link for free tier users, and Line 3 shows a rotating tip selected deterministically based on day_of_year * 24 + hour.
 
@@ -24,11 +24,11 @@ This folder contains the nori-statusline.sh source script with {{install_dir}} t
 
 **Template Substitution:** The {{install_dir}} placeholder in this source script gets replaced with the absolute install directory path during installation. This is the key fix for the subdirectory detection bug - the install directory is baked into the script at install time rather than being derived from CWD at runtime.
 
-**Subdirectory Bug:** Before this fix, the script tried to derive INSTALL_DIR from CWD at runtime, which meant when Claude Code ran from a subdirectory (e.g., Nori installed in ~, running from ~/projects/foo), the script would look for .nori-config.json in ~/projects/foo instead of ~, causing incorrect tier detection (showing free tier branding even for paid accounts).
+**Subdirectory Bug:** Before this fix, the script tried to derive INSTALL_DIR from CWD at runtime, which meant when Claude Code ran from a subdirectory (e.g., nojo installed in ~, running from ~/projects/foo), the script would look for .nojo-config.json in ~/projects/foo instead of ~, causing incorrect tier detection (showing free tier branding even for paid accounts).
 
 **Why Template Not Runtime:** Template substitution was chosen over runtime upward search (like the autoupdate hook) because it's simpler in bash. The install directory never changes after installation, so baking it in avoids complex directory traversal logic.
 
-**Profile Display:** The profile name enrichment allows users to see which behavioral preset is active - this is conditionally displayed only when profile.baseProfile exists in $INSTALL_DIR/.nori-config.json (not ~/nori-config.json).
+**Profile Display:** The profile name enrichment allows users to see which behavioral preset is active - this is conditionally displayed only when profile.baseProfile exists in $INSTALL_DIR/.nojo-config.json (not ~/nojo/config.json).
 
 **Auth Config Format Detection:** The tier detection logic supports two config formats: the nested `auth` object format introduced in v19.0.0 (`{ "auth": { "username": ..., "refreshToken": ..., "organizationUrl": ... } }`) and the legacy flat format (`{ "username": ..., "password": ..., "organizationUrl": ... }`). The script checks the nested format first, then falls back to the legacy format, ensuring backwards compatibility across versions.
 

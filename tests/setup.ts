@@ -40,7 +40,7 @@ export const detectNoriPollution = (cwdPath: string): Array<string> => {
     if (fs.existsSync(claudeMdPath)) {
       try {
         const content = fs.readFileSync(claudeMdPath, "utf-8");
-        if (content.includes("BEGIN NORI-AI MANAGED BLOCK")) {
+        if (content.includes("BEGIN NOJO MANAGED BLOCK")) {
           pollutionMarkers.push(".claude/CLAUDE.md");
         }
       } catch {

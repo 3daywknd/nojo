@@ -9,12 +9,12 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-# Configuration - Use consolidated log file
-readonly LOG_FILE="/tmp/nori.log"
-readonly NOTIFICATION_TITLE="Nori-Notification"
+# Configuration - Use consolidated log file (cross-platform)
+readonly LOG_FILE="${TMPDIR:-/tmp}/nojo.log"
+readonly NOTIFICATION_TITLE="nojo"
 readonly DEFAULT_MESSAGE="Claude Code needs your attention"
 readonly NOTIFICATION_TIMEOUT=5000
-readonly NOTIFICATION_GROUP="nori-notifications"
+readonly NOTIFICATION_GROUP="nojo-notifications"
 
 # Logging function
 log() {
@@ -232,7 +232,7 @@ send_macos_notification() {
     log "Direct method failed, trying temp file approach"
 
     # Use temp file for complex messages
-    local temp_script=$(mktemp /tmp/nori-notify.XXXXXX)
+    local temp_script=$(mktemp "${TMPDIR:-/tmp}/nojo-notify.XXXXXX")
     printf 'display notification "%s" with title "%s"\n' \
         "$(echo "$message" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')" \
         "$(echo "$title" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')" > "$temp_script"

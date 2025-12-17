@@ -1,4 +1,6 @@
 import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
@@ -110,8 +112,8 @@ describe("logger file output", () => {
     setSilentMode({ silent: false });
   });
 
-  it("should export LOG_FILE as /tmp/nori.log", () => {
-    expect(LOG_FILE).toBe("/tmp/nori.log");
+  it("should export LOG_FILE as os.tmpdir()/nojo.log", () => {
+    expect(LOG_FILE).toBe(path.join(os.tmpdir(), "nojo.log"));
   });
 
   it("should write info messages to log file", async () => {

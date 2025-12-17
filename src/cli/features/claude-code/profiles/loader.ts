@@ -7,7 +7,6 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { isPaidInstall, type Config } from "@/cli/config.js";
 import {
   getClaudeProfilesDir,
   getClaudeSettingsFile,
@@ -19,6 +18,7 @@ import {
 import { ProfileLoaderRegistry } from "@/cli/features/claude-code/profiles/profileLoaderRegistry.js";
 import { success, info, warn } from "@/cli/logger.js";
 
+import type { Config } from "@/cli/config.js";
 import type { Loader, ValidationResult } from "@/cli/features/agentRegistry.js";
 
 // Get directory of this loader file
@@ -32,14 +32,14 @@ const PROFILE_TEMPLATES_DIR = path.join(__dirname, "config");
 const MIXINS_DIR = path.join(PROFILE_TEMPLATES_DIR, "_mixins");
 
 /**
- * Check if user is a paid tier user
- * @param args - Configuration arguments
- * @param args.config - Runtime configuration
+ * Check if user is a paid tier user (always false now - paid features removed)
+ * @param _args - Function arguments (unused)
+ * @param _args.config - Runtime configuration (unused)
  *
- * @returns True if user has auth credentials (paid install)
+ * @returns Always false since paid features are removed
  */
-const isPaidUser = (args: { config: Config }): boolean => {
-  return isPaidInstall(args);
+const isPaidUser = (_args: { config: Config }): boolean => {
+  return false;
 };
 
 /**
@@ -120,9 +120,9 @@ const getMixinPaths = (args: { metadata: ProfileMetadata }): Array<string> => {
  * Install profile templates to ~/.claude/profiles/
  * Handles profile composition by resolving inheritance from base profiles
  *
- * This function copies built-in profiles from the nori-ai package to ~/.claude/profiles/.
+ * This function copies built-in profiles from the nojo package to ~/.claude/profiles/.
  * Built-in profiles are ALWAYS overwritten to ensure they stay up-to-date.
- * Custom profiles (those that don't exist in the nori-ai package) are never touched.
+ * Custom profiles (those that don't exist in the nojo package) are never touched.
  *
  * @param args - Configuration arguments
  * @param args.config - Runtime configuration
@@ -134,7 +134,7 @@ const installProfiles = async (args: { config: Config }): Promise<void> => {
     installDir: config.installDir,
   });
 
-  info({ message: "Installing Nori profiles..." });
+  info({ message: "Installing nojo profiles..." });
 
   // Create profiles directory if it doesn't exist
   await fs.mkdir(claudeProfilesDir, { recursive: true });
@@ -341,7 +341,7 @@ const uninstallProfiles = async (args: { config: Config }): Promise<void> => {
     installDir: config.installDir,
   });
 
-  info({ message: "Removing built-in Nori profiles..." });
+  info({ message: "Removing built-in nojo profiles..." });
 
   try {
     await fs.access(claudeProfilesDir);
@@ -490,7 +490,7 @@ const validate = async (args: {
     await fs.access(claudeProfilesDir);
   } catch {
     errors.push(`Profiles directory not found at ${claudeProfilesDir}`);
-    errors.push('Run "nori-ai install" to create the profiles directory');
+    errors.push('Run "nojo install" to create the profiles directory');
     return {
       valid: false,
       message: "Profiles directory not found",
@@ -529,7 +529,7 @@ const validate = async (args: {
         missingProfiles.length
       } required profile(s): ${missingProfiles.join(", ")}`,
     );
-    errors.push('Run "nori-ai install" to install missing profiles');
+    errors.push('Run "nojo install" to install missing profiles');
   }
 
   if (errors.length > 0) {
@@ -551,7 +551,7 @@ const validate = async (args: {
       errors.push(
         "Profiles directory not configured in permissions.additionalDirectories",
       );
-      errors.push('Run "nori-ai install" to configure permissions');
+      errors.push('Run "nojo install" to configure permissions');
       return {
         valid: false,
         message: "Profiles permissions not configured",

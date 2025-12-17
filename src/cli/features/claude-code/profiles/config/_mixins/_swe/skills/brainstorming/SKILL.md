@@ -11,7 +11,7 @@ Transform rough ideas into fully-formed designs through structured questioning a
 
 **Core principle:** Ask questions to understand, explore alternatives, present design incrementally for validation.
 
-**Announce at start:** "I'm using the Nori Brainstorming skill to refine your idea into a design."
+**Announce at start:** "I'm using the nojo Brainstorming skill to refine your idea into a design."
 
 ## The Process
 

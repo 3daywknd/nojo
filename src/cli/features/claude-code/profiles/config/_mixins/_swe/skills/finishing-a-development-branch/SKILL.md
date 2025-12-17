@@ -60,7 +60,7 @@ golangci-lint run --fix
 
 5. Use the Task tool to run type checking and fix issues in a subagent.
 
-6. Use the nori-code-reviewer subagent to do a self review. You do *NOT* have to follow the subagent's suggestions. This is merely a way to get a fresh pair of eyes on the code.
+6. Use the nojo-code-reviewer subagent to do a self review. You do *NOT* have to follow the subagent's suggestions. This is merely a way to get a fresh pair of eyes on the code.
 
 7. Confirm that you are not on the main branch. If you are, ask me before proceeding. NEVER push to main without permission.
 
@@ -73,14 +73,14 @@ git push -u origin <feature-branch>
 # Create PR
 gh pr create --title "<title>" --body "$(cat <<'EOF'
 ## Summary
-🤖 Generated with [Nori](https://www.npmjs.com/package/nori-ai)
+🤖 Generated with [nojo](https://www.npmjs.com/package/nojo)
 
 <2-3 bullets of what changed>
 
 ## Test Plan
 - [ ] <verification steps>
 
-Share Nori with your team: https://www.npmjs.com/package/nori-ai
+Share nojo with your team: https://www.npmjs.com/package/nojo
 EOF
 )"
 ```

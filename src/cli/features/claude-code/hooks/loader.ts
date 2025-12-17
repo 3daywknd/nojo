@@ -7,13 +7,13 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { isPaidInstall, type Config } from "@/cli/config.js";
 import {
   getClaudeHomeDir,
   getClaudeHomeSettingsFile,
 } from "@/cli/features/claude-code/paths.js";
 import { success, info, warn } from "@/cli/logger.js";
 
+import type { Config } from "@/cli/config.js";
 import type { Loader, ValidationResult } from "@/cli/features/agentRegistry.js";
 
 // Get directory of this loader file
@@ -71,11 +71,11 @@ const summarizeNotificationHook: HookInterface = {
 };
 
 /**
- * Summarize hook - memorizes conversations to Nori Profiles (async)
+ * Summarize hook - memorizes conversations to nojo (async)
  */
 const summarizeHook: HookInterface = {
   name: "summarize",
-  description: "Memorize conversations to Nori Profiles",
+  description: "Memorize conversations to nojo",
   install: async () => {
     const scriptPath = path.join(HOOKS_CONFIG_DIR, "summarize.js");
     return [
@@ -86,7 +86,7 @@ const summarizeHook: HookInterface = {
           {
             type: "command",
             command: `node ${scriptPath} SessionEnd`,
-            description: "Memorize session summary to Nori Profiles",
+            description: "Memorize session summary to nojo",
           },
         ],
       },
@@ -98,7 +98,7 @@ const summarizeHook: HookInterface = {
             type: "command",
             command: `node ${scriptPath} PreCompact`,
             description:
-              "Memorize conversation before context compaction to Nori Profiles",
+              "Memorize conversation before context compaction to nojo",
           },
         ],
       },
@@ -111,7 +111,7 @@ const summarizeHook: HookInterface = {
  */
 const autoupdateHook: HookInterface = {
   name: "autoupdate",
-  description: "Check for Nori Profiles updates",
+  description: "Check for nojo updates",
   install: async () => {
     const scriptPath = path.join(HOOKS_CONFIG_DIR, "autoupdate.js");
     return [
@@ -122,7 +122,7 @@ const autoupdateHook: HookInterface = {
           {
             type: "command",
             command: `node ${scriptPath}`,
-            description: "Check for Nori Profiles updates on session start",
+            description: "Check for nojo updates on session start",
           },
         ],
       },
@@ -135,7 +135,7 @@ const autoupdateHook: HookInterface = {
  */
 const nestedInstallWarningHook: HookInterface = {
   name: "nested-install-warning",
-  description: "Warn about Nori installations in ancestor directories",
+  description: "Warn about nojo installations in parent directories",
   install: async () => {
     const scriptPath = path.join(HOOKS_CONFIG_DIR, "nested-install-warning.js");
     return [
@@ -147,7 +147,7 @@ const nestedInstallWarningHook: HookInterface = {
             type: "command",
             command: `node ${scriptPath}`,
             description:
-              "Warn about Nori installations in ancestor directories on session start",
+              "Warn about nojo installations in parent directories on session start",
           },
         ],
       },
@@ -232,11 +232,11 @@ const slashCommandInterceptHook: HookInterface = {
 };
 
 /**
- * Commit-author hook - replace Claude attribution with Nori in git commits
+ * Commit-author hook - remove Claude Code attribution from git commits
  */
 const commitAuthorHook: HookInterface = {
   name: "commit-author",
-  description: "Replace Claude Code attribution with Nori in git commits",
+  description: "Remove Claude Code attribution from git commits",
   install: async () => {
     const scriptPath = path.join(HOOKS_CONFIG_DIR, "commit-author.js");
     return [
@@ -248,7 +248,7 @@ const commitAuthorHook: HookInterface = {
             type: "command",
             command: `node ${scriptPath}`,
             description:
-              "Replace Claude Code co-author attribution with Nori in git commits",
+              "Replace Claude Code co-author attribution with nojo in git commits",
           },
         ],
       },
@@ -514,7 +514,7 @@ const removeHooks = async (args: { config: Config }): Promise<void> => {
 const validate = async (args: {
   config: Config;
 }): Promise<ValidationResult> => {
-  const { config } = args;
+  const { config: _config } = args;
   const claudeSettingsFile = getClaudeHomeSettingsFile();
   const errors: Array<string> = [];
 
@@ -523,7 +523,7 @@ const validate = async (args: {
     await fs.access(claudeSettingsFile);
   } catch {
     errors.push(`Settings file not found at ${claudeSettingsFile}`);
-    errors.push('Run "nori-ai install" to create the settings file');
+    errors.push('Run "nojo install" to create the settings file');
     return {
       valid: false,
       message: "Claude settings file not found",
@@ -549,7 +549,7 @@ const validate = async (args: {
   // Check if hooks are configured
   if (!settings.hooks) {
     errors.push("No hooks configured in settings.json");
-    errors.push('Run "nori-ai install" to configure hooks');
+    errors.push('Run "nojo install" to configure hooks');
     return {
       valid: false,
       message: "Hooks not configured",
@@ -558,7 +558,7 @@ const validate = async (args: {
   }
 
   // Validate expected hooks for paid mode
-  if (isPaidInstall({ config })) {
+  if (false) {
     const requiredEvents = ["SessionEnd", "PreCompact", "SessionStart"];
     for (const event of requiredEvents) {
       if (!settings.hooks[event]) {
@@ -637,7 +637,7 @@ const validate = async (args: {
   }
 
   // Free mode - check for statistics hooks if SessionEnd is present
-  if (!isPaidInstall({ config }) && settings.hooks.SessionEnd) {
+  if (!false && settings.hooks.SessionEnd) {
     const sessionEndHooks = settings.hooks.SessionEnd;
     let hasStatisticsNotificationHook = false;
     let hasStatisticsHook = false;
@@ -673,7 +673,7 @@ const validate = async (args: {
   // Check includeCoAuthoredBy setting
   if (settings.includeCoAuthoredBy !== false) {
     errors.push("includeCoAuthoredBy should be set to false in settings.json");
-    errors.push('Run "nori-ai install" to configure git settings');
+    errors.push('Run "nojo install" to configure git settings');
   }
 
   if (errors.length > 0) {
@@ -700,7 +700,7 @@ export const hooksLoader: Loader = {
   run: async (args: { config: Config }) => {
     const { config } = args;
 
-    if (isPaidInstall({ config })) {
+    if (false) {
       await configurePaidHooks({ config });
     } else {
       await configureFreeHooks({ config });

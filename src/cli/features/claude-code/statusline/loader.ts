@@ -1,6 +1,6 @@
 /**
  * Statusline feature loader
- * Configures Claude Code status line to display git branch, cost, tokens, and Nori branding
+ * Configures Claude Code status line to display git branch, cost, tokens
  */
 
 import * as fs from "fs/promises";
@@ -21,7 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Configure status line to display git branch, session cost, token usage, and Nori branding
+ * Configure status line to display git branch, session cost, and token usage
  * @param args - Configuration arguments
  * @param args.config - Runtime configuration
  */
@@ -33,10 +33,10 @@ const configureStatusLine = async (args: { config: Config }): Promise<void> => {
   info({ message: "Configuring status line..." });
 
   // Source script path (in build output)
-  const sourceScript = path.join(__dirname, "config", "nori-statusline.sh");
+  const sourceScript = path.join(__dirname, "config", "nojo-statusline.sh");
 
   // Destination script path (in .claude directory)
-  const destScript = path.join(claudeDir, "nori-statusline.sh");
+  const destScript = path.join(claudeDir, "nojo-statusline.sh");
 
   // Verify source script exists
   try {
@@ -79,7 +79,7 @@ const configureStatusLine = async (args: { config: Config }): Promise<void> => {
   success({ message: `✓ Status line configured in ${claudeSettingsFile}` });
   info({
     message:
-      "Status line will display: git branch, session cost, tokens, rotating tips, and Nori branding",
+      "Status line will display: git branch, session cost, tokens, rotating tips, and nojo branding",
   });
 };
 
@@ -92,7 +92,7 @@ const removeStatusLine = async (args: { config: Config }): Promise<void> => {
   const { config: _config } = args;
   const claudeDir = getClaudeHomeDir();
   const claudeSettingsFile = getClaudeHomeSettingsFile();
-  const destScript = path.join(claudeDir, "nori-statusline.sh");
+  const destScript = path.join(claudeDir, "nojo-statusline.sh");
 
   info({ message: "Removing status line from Claude Code settings..." });
 

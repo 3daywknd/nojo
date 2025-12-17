@@ -1,14 +1,12 @@
 /**
  * Check command implementation
  *
- * Validates Nori installation and configuration
+ * Validates nojo installation and configuration
  */
 
-import { handshake } from "@/api/index.js";
 import {
   loadConfig,
   validateConfig,
-  isPaidInstall,
   getInstalledAgents,
 } from "@/cli/config.js";
 import { AgentRegistry } from "@/cli/features/agentRegistry.js";
@@ -27,7 +25,7 @@ export const registerCheckCommand = (args: { program: Command }): void => {
 
   program
     .command("check")
-    .description("Validate Nori installation and configuration")
+    .description("Validate nojo installation and configuration")
     .action(async () => {
       // Get global options from parent
       const globalOpts = program.opts();
@@ -40,7 +38,7 @@ export const registerCheckCommand = (args: { program: Command }): void => {
 };
 
 /**
- * Run validation checks on Nori installation
+ * Run validation checks on nojo installation
  * @param args - Configuration arguments
  * @param args.installDir - Custom installation directory (optional)
  * @param args.agent - AI agent to use (auto-detected from config if not provided)
@@ -61,11 +59,11 @@ export const checkMain = async (args?: {
     if (installations.length === 0) {
       error({
         message:
-          "No Nori installations found in current directory or parent directories",
+          "No nojo installations found in current directory or parent directories",
       });
       info({
         message:
-          "Run 'nori-ai install' to create a new installation, or use --install-dir to specify a location",
+          "Run 'nojo install' to create a new installation, or use --install-dir to specify a location",
       });
       process.exit(1);
     }
@@ -73,7 +71,7 @@ export const checkMain = async (args?: {
   }
 
   newline();
-  info({ message: "Running Nori Profiles validation checks..." });
+  info({ message: "Running nojo validation checks..." });
   newline();
 
   let hasErrors = false;
@@ -98,7 +96,7 @@ export const checkMain = async (args?: {
   const config = await loadConfig({ installDir });
   if (config == null) {
     error({ message: "Configuration file is missing or corrupted" });
-    info({ message: "Run 'nori-ai install' to create a new configuration" });
+    info({ message: "Run 'nojo install' to create a new configuration" });
     process.exit(1);
   }
 
@@ -123,22 +121,6 @@ export const checkMain = async (args?: {
       // No agents (shouldn't happen due to getInstalledAgents fallback, but handle it)
       agentName = "claude-code";
     }
-  }
-
-  // Check server connectivity (paid mode only)
-  if (isPaidInstall({ config })) {
-    info({ message: "Testing server connection..." });
-    try {
-      const response = await handshake();
-      success({
-        message: `   ✓ Server authentication successful (user: ${response.user})`,
-      });
-    } catch (err: any) {
-      error({ message: "   ✗ Server authentication failed" });
-      info({ message: `     - ${err.message}` });
-      hasErrors = true;
-    }
-    newline();
   }
 
   // Run validation for all loaders
@@ -179,8 +161,5 @@ export const checkMain = async (args?: {
     process.exit(1);
   } else {
     success({ message: "All validation checks passed!" });
-    info({
-      message: `Installation mode: ${isPaidInstall({ config }) ? "paid" : "free"}`,
-    });
   }
 };

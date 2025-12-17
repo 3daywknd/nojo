@@ -1,4 +1,4 @@
-# Noridoc: features
+# nojo-doc: features
 
 Path: @/src/cli/features
 
@@ -62,11 +62,11 @@ The `--agent` global CLI option (default: "claude-code") determines which agent 
 - `resetInstance()`: For test isolation
 
 **Config Loader** (config/loader.ts):
-- Shared loader that manages the `.nori-config.json` file lifecycle (single source of truth for config and version)
+- Shared loader that manages the `.nojo-config.json` file lifecycle (single source of truth for config and version)
 - All agents MUST include this loader in their registry
 - Handles saving/removing config with auth credentials, profile selection, user preferences, and agent tracking (the `agents` object keys indicate which agents are installed)
 - During install: Merges `agents` objects from existing and new config, saves current package version in the `version` field. Preserves existing agent profiles (ensures per-agent profiles set by `switchProfile` survive reinstallation)
-- During uninstall: Removes the uninstalled agent from the `agents` object. If no agents remain, deletes `.nori-config.json`. If agents remain, updates config with remaining agents and preserves the file (including the `version` field)
+- During uninstall: Removes the uninstalled agent from the `agents` object. If no agents remain, deletes `.nojo-config.json`. If agents remain, updates config with remaining agents and preserves the file (including the `version` field)
 
 **Migration System** (migration.ts):
 - Versioned migration system for transforming config between formats during installation
@@ -80,9 +80,9 @@ The `--agent` global CLI option (default: "claude-code") determines which agent 
 
 **`AgentName` is the canonical UID for agents.** The `AgentName` type (`"claude-code" | "cursor-agent"`) is the source of truth for valid agent identifiers. `Agent.name` is typed as `AgentName`, which ensures type safety. CLI entry points parse the `--agent` option string, look up the `Agent` object once via `AgentRegistry.get({ name })`, then pass the `Agent` object around. Functions that need the agent identifier access `agent.name` rather than receiving a separate string parameter. This pattern makes it impossible for the agent name and agent object to get out of sync.
 
-**Loader descriptions must be noun phrases.** Loader `description` fields are displayed in both install and uninstall contexts. The uninstall command shows "The following will be removed:" followed by loader descriptions. Descriptions should be noun phrases (e.g., "Profile templates in ~/.claude/profiles/") not action verbs (e.g., "Install Nori profile templates...") so they read naturally in both contexts. Tests in @/src/cli/commands/uninstall/uninstall.test.ts enforce this convention.
+**Loader descriptions must be noun phrases.** Loader `description` fields are displayed in both install and uninstall contexts. The uninstall command shows "The following will be removed:" followed by loader descriptions. Descriptions should be noun phrases (e.g., "Profile templates in ~/.claude/profiles/") not action verbs (e.g., "Install nojo profile templates...") so they read naturally in both contexts. Tests in @/src/cli/commands/uninstall/uninstall.test.ts enforce this convention.
 
-**Critical: All agents must include the config loader.** The `configLoader` from @/src/cli/features/config/loader.ts manages the shared `.nori-config.json` file. Each agent's LoaderRegistry class must register this loader to ensure proper config file creation during install and removal during uninstall.
+**Critical: All agents must include the config loader.** The `configLoader` from @/src/cli/features/config/loader.ts manages the shared `.nojo-config.json` file. Each agent's LoaderRegistry class must register this loader to ensure proper config file creation during install and removal during uninstall.
 
 The AgentRegistry auto-registers all agents in its constructor. Currently claude-code and cursor-agent are registered. Adding new agents follows this pattern:
 1. Create a new directory (e.g., `new-agent/`) with an agent implementation satisfying the Agent interface
@@ -103,4 +103,4 @@ Agent implementations manage their own internal paths (config directories, instr
 
 Template substitution utilities are agent-specific. Each agent has its own template.ts that replaces agent-appropriate placeholders in content files. Claude Code (@/src/cli/features/claude-code/template.ts) uses `{{skills_dir}}` while Cursor (@/src/cli/features/cursor-agent/template.ts) uses `{{rules_dir}}`. Both support common placeholders: `{{profiles_dir}}`, `{{commands_dir}}`, and `{{install_dir}}`.
 
-Created and maintained by Nori.
+Created and maintained by nojo.

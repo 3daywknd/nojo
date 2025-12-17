@@ -23,7 +23,7 @@ This skill guides you through implementing user interfaces and experiences with 
 
 **Core principle:** Explore variations, iterate with feedback, ensure proper integration.
 
-**Announce at start:** "I'm using the Nori Building UI/UX skill to implement your interface."
+**Announce at start:** "I'm using the nojo Building UI/UX skill to implement your interface."
 
 ## The Process
 
