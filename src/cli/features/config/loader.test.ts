@@ -39,6 +39,8 @@ describe("configLoader", () => {
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "config-loader-test-"));
+    // Create .claude directory since config now lives at .claude/.nojo-config.json
+    fs.mkdirSync(path.join(tempDir, ".claude"), { recursive: true });
   });
 
   afterEach(() => {
@@ -66,117 +68,24 @@ describe("configLoader", () => {
       });
     });
 
-    it("should include sendSessionTranscript: enabled for paid installation", async () => {
-      const config: Config = {
-        installDir: tempDir,
-        agents: { "claude-code": { profile: { baseProfile: "senior-swe" } } },
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
-        sendSessionTranscript: "enabled",
-      };
-
-      await configLoader.run({ config });
-
-      const configFile = getConfigPath({ installDir: tempDir });
-      const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-      expect(fileContents.sendSessionTranscript).toBe("enabled");
+    it.skip("should include sendSessionTranscript when provided [REMOVED - sendSessionTranscript]", async () => {
+      // Test removed - sendSessionTranscript property no longer exists
     });
 
-    it("should NOT include sendSessionTranscript for free installation", async () => {
-      const config: Config = {
-        installDir: tempDir,
-        agents: { "claude-code": { profile: { baseProfile: "senior-swe" } } },
-      };
-
-      await configLoader.run({ config });
-
-      const configFile = getConfigPath({ installDir: tempDir });
-      const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-      expect(fileContents.sendSessionTranscript).toBeUndefined();
+    it.skip("should NOT include sendSessionTranscript when not provided [REMOVED - sendSessionTranscript]", async () => {
+      // Test removed - sendSessionTranscript property no longer exists
     });
 
-    it("should preserve existing sendSessionTranscript preference for paid installation", async () => {
-      const config: Config = {
-        installDir: tempDir,
-        agents: { "claude-code": { profile: { baseProfile: "senior-swe" } } },
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
-        sendSessionTranscript: "disabled",
-      };
-
-      await configLoader.run({ config });
-
-      const configFile = getConfigPath({ installDir: tempDir });
-      const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-      expect(fileContents.sendSessionTranscript).toBe("disabled");
+    it.skip("should preserve existing sendSessionTranscript preference [REMOVED - sendSessionTranscript]", async () => {
+      // Test removed - sendSessionTranscript property no longer exists
     });
 
-    it("should save registryAuths to config file", async () => {
-      const config: Config = {
-        installDir: tempDir,
-        agents: { "claude-code": { profile: { baseProfile: "senior-swe" } } },
-        registryAuths: [
-          {
-            registryUrl: "https://registry.example.com",
-            username: "user@example.com",
-            password: "secret123",
-          },
-        ],
-      };
-
-      await configLoader.run({ config });
-
-      const configFile = getConfigPath({ installDir: tempDir });
-      const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-      expect(fileContents.registryAuths).toEqual([
-        {
-          registryUrl: "https://registry.example.com",
-          username: "user@example.com",
-          password: "secret123",
-        },
-      ]);
+    it.skip("should save registryAuths to config file [REMOVED - registryAuths]", async () => {
+      // Test removed - registryAuths property no longer exists
     });
 
-    it("should preserve existing registryAuths when not provided in new config", async () => {
-      // Create existing config with registryAuths
-      const configFile = getConfigPath({ installDir: tempDir });
-      fs.writeFileSync(
-        configFile,
-        JSON.stringify({
-          installDir: tempDir,
-          registryAuths: [
-            {
-              registryUrl: "https://existing.example.com",
-              username: "existing@example.com",
-              password: "existingpass",
-            },
-          ],
-        }),
-        "utf-8",
-      );
-
-      // Run with config that doesn't include registryAuths
-      const config: Config = {
-        installDir: tempDir,
-        agents: { "claude-code": { profile: { baseProfile: "senior-swe" } } },
-      };
-
-      await configLoader.run({ config });
-
-      const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-      expect(fileContents.registryAuths).toEqual([
-        {
-          registryUrl: "https://existing.example.com",
-          username: "existing@example.com",
-          password: "existingpass",
-        },
-      ]);
+    it.skip("should preserve existing registryAuths when not provided in new config [REMOVED - registryAuths]", async () => {
+      // Test removed - registryAuths property no longer exists
     });
 
     it("should save agents to config file", async () => {
@@ -302,49 +211,6 @@ describe("configLoader", () => {
       const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
       // agents field should be merged - new config takes precedence
       expect(Object.keys(fileContents.agents)).toEqual(["cursor-agent"]);
-    });
-
-    it("should convert password to refresh token when password is provided", async () => {
-      const config: Config = {
-        installDir: tempDir,
-        agents: { "claude-code": { profile: { baseProfile: "senior-swe" } } },
-        auth: {
-          username: "test@example.com",
-          password: "testpass",
-          organizationUrl: "https://example.com",
-        },
-      };
-
-      await configLoader.run({ config });
-
-      const configFile = getConfigPath({ installDir: tempDir });
-      const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-
-      // Should have refreshToken in nested auth, not password
-      expect(fileContents.auth.refreshToken).toBe("mock-refresh-token");
-      expect(fileContents.auth.password).toBeNull();
-      expect(fileContents.auth.username).toBe("test@example.com");
-    });
-
-    it("should use existing refresh token when provided instead of password", async () => {
-      const config: Config = {
-        installDir: tempDir,
-        agents: { "claude-code": { profile: { baseProfile: "senior-swe" } } },
-        auth: {
-          username: "test@example.com",
-          refreshToken: "existing-refresh-token",
-          organizationUrl: "https://example.com",
-        },
-      };
-
-      await configLoader.run({ config });
-
-      const configFile = getConfigPath({ installDir: tempDir });
-      const fileContents = JSON.parse(fs.readFileSync(configFile, "utf-8"));
-
-      // Should preserve existing refreshToken in nested auth
-      expect(fileContents.auth.refreshToken).toBe("existing-refresh-token");
-      expect(fileContents.auth.password).toBeNull();
     });
   });
 

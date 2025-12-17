@@ -34,14 +34,6 @@ describe("AgentRegistry", () => {
       expect(agent.displayName).toBe("Claude Code");
     });
 
-    test("returns cursor-agent when requested", () => {
-      const registry = AgentRegistry.getInstance();
-      const agent = registry.get({ name: "cursor-agent" });
-
-      expect(agent.name).toBe("cursor-agent");
-      expect(agent.displayName).toBe("Cursor Agent");
-    });
-
     test("throws error with helpful message for unknown agent", () => {
       const registry = AgentRegistry.getInstance();
 
@@ -63,8 +55,7 @@ describe("AgentRegistry", () => {
       const agents = registry.list();
 
       expect(agents).toContain("claude-code");
-      expect(agents).toContain("cursor-agent");
-      expect(agents.length).toBeGreaterThanOrEqual(2);
+      expect(agents.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -105,35 +96,9 @@ describe("AgentRegistry", () => {
       ]);
     });
 
-    test("cursor-agent returns global loaders (hooks and slashcommands, no statusline)", () => {
-      const registry = AgentRegistry.getInstance();
-      const agent = registry.get({ name: "cursor-agent" });
-
-      const globalLoaders = agent.getGlobalLoaders();
-
-      expect(globalLoaders).toEqual([
-        { name: "hooks", humanReadableName: "hooks" },
-        { name: "slashcommands", humanReadableName: "slash commands" },
-      ]);
-    });
-
     test("claude-code agent provides LoaderRegistry", () => {
       const registry = AgentRegistry.getInstance();
       const agent = registry.get({ name: "claude-code" });
-      const loaderRegistry: LoaderRegistry = agent.getLoaderRegistry();
-
-      // Verify it has the expected methods
-      expect(loaderRegistry.getAll).toBeDefined();
-      expect(loaderRegistry.getAllReversed).toBeDefined();
-
-      // Verify it returns loaders
-      const loaders = loaderRegistry.getAll();
-      expect(loaders.length).toBeGreaterThan(0);
-    });
-
-    test("cursor-agent provides LoaderRegistry", () => {
-      const registry = AgentRegistry.getInstance();
-      const agent = registry.get({ name: "cursor-agent" });
       const loaderRegistry: LoaderRegistry = agent.getLoaderRegistry();
 
       // Verify it has the expected methods
@@ -163,27 +128,14 @@ describe("AgentRegistry", () => {
       }
     });
 
-    test("cursor-agent includes config loader", () => {
+    test("claude-code includes config loader", () => {
       const registry = AgentRegistry.getInstance();
-      const agent = registry.get({ name: "cursor-agent" });
+      const agent = registry.get({ name: "claude-code" });
       const loaderRegistry = agent.getLoaderRegistry();
       const loaders = loaderRegistry.getAll();
       const loaderNames = loaders.map((l) => l.name);
 
       expect(loaderNames).toContain("config");
-    });
-
-    test("both agents include config loader", () => {
-      const registry = AgentRegistry.getInstance();
-
-      for (const agentName of ["claude-code", "cursor-agent"]) {
-        const agent = registry.get({ name: agentName });
-        const loaderRegistry = agent.getLoaderRegistry();
-        const loaders = loaderRegistry.getAll();
-        const loaderNames = loaders.map((l) => l.name);
-
-        expect(loaderNames).toContain("config");
-      }
     });
   });
 
@@ -303,35 +255,6 @@ describe("AgentRegistry", () => {
     });
   });
 
-  describe("cursor-agent listSourceProfiles", () => {
-    test("returns profiles from package source directory", async () => {
-      const registry = AgentRegistry.getInstance();
-      const agent = registry.get({ name: "cursor-agent" });
-
-      const profiles = await agent.listSourceProfiles();
-
-      // Should return at least one profile (amol) from cursor-agent/profiles/config/
-      expect(profiles.length).toBeGreaterThan(0);
-
-      const profileNames = profiles.map((p) => p.name);
-      expect(profileNames).toContain("amol");
-    });
-
-    test("returns profiles with name and description", async () => {
-      const registry = AgentRegistry.getInstance();
-      const agent = registry.get({ name: "cursor-agent" });
-
-      const profiles = await agent.listSourceProfiles();
-
-      for (const profile of profiles) {
-        expect(profile.name).toBeDefined();
-        expect(profile.name.length).toBeGreaterThan(0);
-        expect(profile.description).toBeDefined();
-        expect(profile.description.length).toBeGreaterThan(0);
-      }
-    });
-  });
-
   describe("claude-code agent switchProfile", () => {
     let testInstallDir: string;
 
@@ -354,11 +277,19 @@ describe("AgentRegistry", () => {
       await fs.mkdir(profileDir, { recursive: true });
       await fs.writeFile(path.join(profileDir, "CLAUDE.md"), "# Test Profile");
 
-      // Create initial config
-      const configPath = path.join(testInstallDir, ".nori-config.json");
+      // Create initial config (now at .claude/.nojo-config.json)
+      const configPath = path.join(
+        testInstallDir,
+        ".claude",
+        ".nojo-config.json",
+      );
       await fs.writeFile(
         configPath,
-        JSON.stringify({ profile: { baseProfile: "old-profile" } }),
+        JSON.stringify({
+          agents: {
+            "claude-code": { profile: { baseProfile: "old-profile" } },
+          },
+        }),
       );
 
       const registry = AgentRegistry.getInstance();
@@ -383,23 +314,19 @@ describe("AgentRegistry", () => {
       await fs.mkdir(profileDir, { recursive: true });
       await fs.writeFile(path.join(profileDir, "CLAUDE.md"), "# New Profile");
 
-      // Create initial config with auth and other fields
-      const configPath = path.join(testInstallDir, ".nori-config.json");
+      // Create initial config with autoupdate field (now at .claude/.nojo-config.json)
+      const configPath = path.join(
+        testInstallDir,
+        ".claude",
+        ".nojo-config.json",
+      );
       await fs.writeFile(
         configPath,
         JSON.stringify({
-          username: "test@example.com",
-          password: "secret",
-          organizationUrl: "https://org.example.com",
-          profile: { baseProfile: "old-profile" },
-          sendSessionTranscript: "enabled",
-          registryAuths: [
-            {
-              username: "reg-user",
-              password: "reg-pass",
-              registryUrl: "https://registry.example.com",
-            },
-          ],
+          agents: {
+            "claude-code": { profile: { baseProfile: "old-profile" } },
+          },
+          autoupdate: "disabled",
         }),
       );
 
@@ -411,21 +338,9 @@ describe("AgentRegistry", () => {
         profileName: "new-profile",
       });
 
-      // Verify all fields preserved (auth is now in nested format after save)
+      // Verify all fields preserved
       const updatedConfig = JSON.parse(await fs.readFile(configPath, "utf-8"));
-      expect(updatedConfig.auth.username).toBe("test@example.com");
-      expect(updatedConfig.auth.password).toBe("secret");
-      expect(updatedConfig.auth.organizationUrl).toBe(
-        "https://org.example.com",
-      );
-      expect(updatedConfig.sendSessionTranscript).toBe("enabled");
-      expect(updatedConfig.registryAuths).toEqual([
-        {
-          username: "reg-user",
-          password: "reg-pass",
-          registryUrl: "https://registry.example.com",
-        },
-      ]);
+      expect(updatedConfig.autoupdate).toBe("disabled");
       expect(updatedConfig.agents?.["claude-code"]?.profile?.baseProfile).toBe(
         "new-profile",
       );

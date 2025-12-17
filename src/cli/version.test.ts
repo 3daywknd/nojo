@@ -34,10 +34,10 @@ describe("version", () => {
       }
     });
 
-    it("should return version from package.json with name nori-ai", () => {
+    it("should return version from package.json with name nojo", () => {
       // Create test package.json with correct name
       const testPackage = {
-        name: "nori-ai",
+        name: "nojo",
         version: "13.5.2",
       };
       fs.writeFileSync(testPackageJsonPath, JSON.stringify(testPackage));
@@ -75,7 +75,7 @@ describe("version", () => {
 
       // Put package.json in root, start search from grandchild
       const testPackage = {
-        name: "nori-ai",
+        name: "nojo",
         version: "14.0.0",
       };
       fs.writeFileSync(testPackageJsonPath, JSON.stringify(testPackage));
@@ -129,8 +129,6 @@ describe("version", () => {
     it("should return version from config file", async () => {
       // Create a test config file with version
       await saveConfig({
-        username: null,
-        organizationUrl: null,
         agents: { "claude-code": {} },
         version: "13.5.2",
         installDir: tempDir,
@@ -144,21 +142,19 @@ describe("version", () => {
       await expect(
         getInstalledVersion({ installDir: tempDir }),
       ).rejects.toThrow(
-        "Installation out of date: no version field found in .nori-config.json file.",
+        "Installation out of date: no version field found in .nojo-config.json file.",
       );
     });
 
     it("should throw error if config has no version field and no fallback file", async () => {
       // Create config without version field
       await saveConfig({
-        username: null,
-        organizationUrl: null,
         agents: { "claude-code": {} },
         installDir: tempDir,
       });
 
       // Ensure no fallback file exists
-      const fallbackPath = path.join(tempDir, ".nori-installed-version");
+      const fallbackPath = path.join(tempDir, ".nojo-installed-version");
       try {
         fs.unlinkSync(fallbackPath);
       } catch {
@@ -168,21 +164,19 @@ describe("version", () => {
       await expect(
         getInstalledVersion({ installDir: tempDir }),
       ).rejects.toThrow(
-        "Installation out of date: no version field found in .nori-config.json file.",
+        "Installation out of date: no version field found in .nojo-config.json file.",
       );
     });
 
-    it("should return version from .nori-installed-version fallback when config has no version", async () => {
+    it("should return version from .nojo-installed-version fallback when config has no version", async () => {
       // Create config without version field
       await saveConfig({
-        username: null,
-        organizationUrl: null,
         agents: { "claude-code": {} },
         installDir: tempDir,
       });
 
       // Create fallback file with valid version
-      fs.writeFileSync(path.join(tempDir, ".nori-installed-version"), "18.0.0");
+      fs.writeFileSync(path.join(tempDir, ".nojo-installed-version"), "18.0.0");
 
       const version = await getInstalledVersion({ installDir: tempDir });
       expect(version).toBe("18.0.0");
@@ -191,28 +185,26 @@ describe("version", () => {
     it("should throw error if config has no version and fallback file has invalid semver", async () => {
       // Create config without version field
       await saveConfig({
-        username: null,
-        organizationUrl: null,
         agents: { "claude-code": {} },
         installDir: tempDir,
       });
 
       // Create fallback file with invalid version
       fs.writeFileSync(
-        path.join(tempDir, ".nori-installed-version"),
+        path.join(tempDir, ".nojo-installed-version"),
         "not-a-version",
       );
 
       await expect(
         getInstalledVersion({ installDir: tempDir }),
       ).rejects.toThrow(
-        "Installation out of date: no version field found in .nori-config.json file.",
+        "Installation out of date: no version field found in .nojo-config.json file.",
       );
     });
 
     it("should never delete real user config file", async () => {
       // This test verifies that process.cwd is mocked and tests never touch the real config file
-      const realConfigPath = path.join(originalCwd(), ".nori-config.json");
+      const realConfigPath = path.join(originalCwd(), ".nojo-config.json");
 
       // Check if real config file exists before test
       let existedBefore = false;
@@ -229,8 +221,6 @@ describe("version", () => {
 
       // Run all the test operations
       await saveConfig({
-        username: null,
-        organizationUrl: null,
         agents: { "claude-code": {} },
         version: "13.5.2",
         installDir: tempDir,
@@ -298,6 +288,10 @@ describe("version", () => {
         path.join(os.tmpdir(), "version-test-"),
       );
 
+      // Create .claude directory since config now lives at .claude/.nojo-config.json
+      const claudeDir = path.join(tempDir, ".claude");
+      fs.mkdirSync(claudeDir, { recursive: true });
+
       // Mock cwd
       originalCwd = process.cwd;
       process.cwd = () => tempDir;
@@ -333,7 +327,11 @@ describe("version", () => {
     it("should never delete real user config file", () => {
       // This test verifies that process.cwd is mocked and tests never touch the real config file
       // Get what the real config path WOULD be (using originalCwd from beforeEach)
-      const realConfigPath = path.join(originalCwd(), ".nori-config.json");
+      const realConfigPath = path.join(
+        originalCwd(),
+        ".claude",
+        ".nojo-config.json",
+      );
 
       // Check if real config exists before test
       let existedBefore = false;

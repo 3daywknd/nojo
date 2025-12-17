@@ -55,9 +55,11 @@ describe("check command", () => {
 
   describe("auto-detection", () => {
     it("should auto-detect installation from current directory", async () => {
-      // Create a Nori installation marker
+      // Create .claude directory and nojo installation marker (now at .claude/.nojo-config.json)
+      const claudeDir = path.join(tempDir, ".claude");
+      await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(tempDir, ".nori-config.json"),
+        path.join(claudeDir, ".nojo-config.json"),
         JSON.stringify({ profile: { baseProfile: "senior-swe" } }),
       );
 
@@ -73,15 +75,17 @@ describe("check command", () => {
         // Expected to exit (either success or failure)
       }
 
-      // Verify it ran validation (look for "Running Nori Profiles validation checks...")
+      // Verify it ran validation (look for "Running nojo validation checks...")
       const logCalls = consoleLogSpy.mock.calls.flat().join("\n");
-      expect(logCalls).toContain("Running Nori Profiles validation checks");
+      expect(logCalls).toContain("Running nojo validation checks");
     });
 
     it("should auto-detect installation from child directory", async () => {
-      // Create a Nori installation marker in parent
+      // Create .claude directory and nojo installation marker in parent (now at .claude/.nojo-config.json)
+      const claudeDir = path.join(tempDir, ".claude");
+      await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(tempDir, ".nori-config.json"),
+        path.join(claudeDir, ".nojo-config.json"),
         JSON.stringify({ profile: { baseProfile: "senior-swe" } }),
       );
 
@@ -101,11 +105,11 @@ describe("check command", () => {
 
       // Verify it ran validation (found parent installation)
       const logCalls = consoleLogSpy.mock.calls.flat().join("\n");
-      expect(logCalls).toContain("Running Nori Profiles validation checks");
+      expect(logCalls).toContain("Running nojo validation checks");
     });
 
     it("should show error when no installation found", async () => {
-      // Create an empty directory (no Nori installation)
+      // Create an empty directory (no nojo installation)
       const emptyDir = path.join(tempDir, "empty-project");
       await fs.mkdir(emptyDir, { recursive: true });
 
@@ -117,15 +121,16 @@ describe("check command", () => {
 
       // Verify error message
       const errorCalls = consoleErrorSpy.mock.calls.flat().join("\n");
-      expect(errorCalls).toContain("No Nori installations found");
+      expect(errorCalls).toContain("No nojo installations found");
     });
 
     it("should use explicit --install-dir when provided", async () => {
-      // Create installation in a specific directory
+      // Create installation in a specific directory (now at .claude/.nojo-config.json)
       const explicitDir = path.join(tempDir, "explicit-install");
-      await fs.mkdir(explicitDir, { recursive: true });
+      const explicitClaudeDir = path.join(explicitDir, ".claude");
+      await fs.mkdir(explicitClaudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(explicitDir, ".nori-config.json"),
+        path.join(explicitClaudeDir, ".nojo-config.json"),
         JSON.stringify({ profile: { baseProfile: "senior-swe" } }),
       );
 
@@ -143,15 +148,17 @@ describe("check command", () => {
 
       // Verify it ran validation (used explicit directory)
       const logCalls = consoleLogSpy.mock.calls.flat().join("\n");
-      expect(logCalls).toContain("Running Nori Profiles validation checks");
+      expect(logCalls).toContain("Running nojo validation checks");
     });
 
     it("should error when config file is corrupted (invalid JSON)", async () => {
-      // Create a config file with invalid JSON (corrupted)
+      // Create .claude directory and a config file with invalid JSON (corrupted)
       // This makes hasExistingInstallation return true (file exists)
       // but loadConfig returns null (invalid JSON)
+      const claudeDir = path.join(tempDir, ".claude");
+      await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(tempDir, ".nori-config.json"),
+        path.join(claudeDir, ".nojo-config.json"),
         "{ invalid json syntax",
       );
 
@@ -173,9 +180,11 @@ describe("check command", () => {
 
   describe("agent auto-detection", () => {
     it("should auto-detect single installed agent from config", async () => {
-      // Create a config with only cursor-agent installed
+      // Create .claude directory and a config with only cursor-agent installed (now at .claude/.nojo-config.json)
+      const claudeDir = path.join(tempDir, ".claude");
+      await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(tempDir, ".nori-config.json"),
+        path.join(claudeDir, ".nojo-config.json"),
         JSON.stringify({
           agents: {
             "cursor-agent": { baseProfile: "senior-swe" },
@@ -195,15 +204,17 @@ describe("check command", () => {
 
       // Verify it ran validation and used cursor-agent (not claude-code)
       const logCalls = consoleLogSpy.mock.calls.flat().join("\n");
-      expect(logCalls).toContain("Running Nori Profiles validation checks");
+      expect(logCalls).toContain("Running nojo validation checks");
       // Should NOT use claude-code's loaders - cursor-agent has different loader names
       // Look for cursor-agent specific validation or absence of claude-code specific messages
     });
 
     it("should error when multiple agents installed and no --agent provided", async () => {
-      // Create a config with both claude-code and cursor-agent installed
+      // Create .claude directory and a config with both claude-code and cursor-agent installed (now at .claude/.nojo-config.json)
+      const claudeDir = path.join(tempDir, ".claude");
+      await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(tempDir, ".nori-config.json"),
+        path.join(claudeDir, ".nojo-config.json"),
         JSON.stringify({
           agents: {
             "claude-code": { baseProfile: "senior-swe" },
@@ -225,9 +236,11 @@ describe("check command", () => {
     });
 
     it("should use explicit --agent when provided, ignoring config", async () => {
-      // Create a config with only cursor-agent installed
+      // Create .claude directory and a config with only cursor-agent installed (now at .claude/.nojo-config.json)
+      const claudeDir = path.join(tempDir, ".claude");
+      await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(tempDir, ".nori-config.json"),
+        path.join(claudeDir, ".nojo-config.json"),
         JSON.stringify({
           agents: {
             "cursor-agent": { baseProfile: "senior-swe" },
@@ -247,13 +260,15 @@ describe("check command", () => {
 
       // Verify it ran validation using claude-code (the explicitly specified agent)
       const logCalls = consoleLogSpy.mock.calls.flat().join("\n");
-      expect(logCalls).toContain("Running Nori Profiles validation checks");
+      expect(logCalls).toContain("Running nojo validation checks");
     });
 
     it("should default to claude-code when config has no agents field (legacy)", async () => {
-      // Create a legacy config without agents field
+      // Create .claude directory and a legacy config without agents field (now at .claude/.nojo-config.json)
+      const claudeDir = path.join(tempDir, ".claude");
+      await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(
-        path.join(tempDir, ".nori-config.json"),
+        path.join(claudeDir, ".nojo-config.json"),
         JSON.stringify({
           profile: { baseProfile: "senior-swe" },
         }),
@@ -271,7 +286,7 @@ describe("check command", () => {
 
       // Verify it ran validation (should use claude-code by default for backwards compatibility)
       const logCalls = consoleLogSpy.mock.calls.flat().join("\n");
-      expect(logCalls).toContain("Running Nori Profiles validation checks");
+      expect(logCalls).toContain("Running nojo validation checks");
     });
   });
 });

@@ -1,26 +1,66 @@
 /**
  * Config file loader
- * Manages the .nori-config.json file lifecycle
+ * Manages the .nojo-config.json file lifecycle
  */
 
 import { unlinkSync, existsSync } from "fs";
 
-import { signInWithEmailAndPassword, AuthErrorCodes } from "firebase/auth";
-
 import {
   getConfigPath,
+  getLegacyConfigPath,
   loadConfig,
   saveConfig,
-  isPaidInstall,
   getInstalledAgents,
 } from "@/cli/config.js";
-import { info, success, error, warn, debug } from "@/cli/logger.js";
+import { success, info } from "@/cli/logger.js";
 import { getCurrentPackageVersion } from "@/cli/version.js";
-import { configureFirebase, getFirebase } from "@/providers/firebase.js";
 
 import type { Config, AgentConfig } from "@/cli/config.js";
 import type { Loader } from "@/cli/features/agentRegistry.js";
-import type { AuthError } from "firebase/auth";
+
+/**
+ * Migrate config from legacy location to new .claude/ location
+ * @param args - Migration arguments
+ * @param args.installDir - Installation directory
+ *
+ * @returns The migrated config if found, null otherwise
+ */
+const migrateFromLegacyLocation = async (args: {
+  installDir: string;
+}): Promise<Config | null> => {
+  const { installDir } = args;
+  const legacyConfigPath = getLegacyConfigPath({ installDir });
+
+  // Check if legacy config exists
+  if (!existsSync(legacyConfigPath)) {
+    return null;
+  }
+
+  // Load config from legacy location by temporarily overriding the path
+  // We need to read the raw file since loadConfig uses the new path
+  const fs = await import("fs/promises");
+  try {
+    const content = await fs.readFile(legacyConfigPath, "utf-8");
+    const rawConfig = JSON.parse(content);
+
+    // Build a Config object from the raw data
+    const migratedConfig: Config = {
+      installDir,
+      autoupdate: rawConfig.autoupdate,
+      agents: rawConfig.agents,
+      version: rawConfig.version,
+    };
+
+    // Delete the legacy file
+    unlinkSync(legacyConfigPath);
+    info({ message: `✓ Migrated config from legacy location` });
+
+    return migratedConfig;
+  } catch {
+    // Failed to read or parse - ignore
+    return null;
+  }
+};
 
 /**
  * Install config file - save config to disk
@@ -30,108 +70,31 @@ import type { AuthError } from "firebase/auth";
 const installConfig = async (args: { config: Config }): Promise<void> => {
   const { config } = args;
 
-  // Load existing config to preserve user preferences (sendSessionTranscript, autoupdate)
-  const existingConfig = await loadConfig({
+  // First, check for and migrate legacy config
+  const migratedConfig = await migrateFromLegacyLocation({
     installDir: config.installDir,
   });
 
-  // Extract auth credentials from config
-  const username = config.auth?.username ?? null;
-  const password = config.auth?.password ?? null;
-  const refreshToken = config.auth?.refreshToken ?? null;
-  const organizationUrl = config.auth?.organizationUrl ?? null;
-
-  // Only include sendSessionTranscript for paid users
-  // Free users should not have this field in their config
-  const sendSessionTranscript = isPaidInstall({ config })
-    ? (config.sendSessionTranscript ?? null)
-    : null;
+  // Load existing config to preserve user preferences (from new location)
+  const existingConfig =
+    migratedConfig ??
+    (await loadConfig({
+      installDir: config.installDir,
+    }));
 
   // Merge agents from existing config and new config
-  // The keys of the agents object indicate which agents are installed
   const mergedAgents: Record<string, AgentConfig> = {
     ...(existingConfig?.agents ?? {}),
     ...(config.agents ?? {}),
   };
 
-  // If we have password but no refresh token, authenticate to get a refresh token
-  // This converts password-based login to token-based storage
-  let tokenToSave = refreshToken;
-  if (password && !refreshToken && username) {
-    info({ message: "Authenticating to obtain secure token..." });
-    debug({ message: `  Email: ${username}` });
-    debug({ message: `  Organization URL: ${organizationUrl}` });
-
-    try {
-      configureFirebase();
-      const firebase = getFirebase();
-      debug({
-        message: `  Firebase project: ${firebase.app.options.projectId}`,
-      });
-
-      const userCredential = await signInWithEmailAndPassword(
-        firebase.auth,
-        username,
-        password,
-      );
-      tokenToSave = userCredential.user.refreshToken;
-      success({ message: "✓ Authentication successful" });
-    } catch (err) {
-      const authError = err as AuthError;
-      error({ message: "Authentication failed" });
-      error({ message: `  Email: ${username}` });
-      error({ message: `  Error code: ${authError.code}` });
-      error({ message: `  Error message: ${authError.message}` });
-
-      // Provide helpful hints based on error code
-      if (
-        authError.code === AuthErrorCodes.INVALID_PASSWORD ||
-        authError.code === AuthErrorCodes.INVALID_LOGIN_CREDENTIALS ||
-        authError.code === "auth/invalid-credential"
-      ) {
-        error({
-          message:
-            "  Hint: Check that your email and password are correct for the Nori backend",
-        });
-      } else if (authError.code === AuthErrorCodes.USER_DELETED) {
-        error({
-          message: "  Hint: This email is not registered. Contact support.",
-        });
-      } else if (
-        authError.code === AuthErrorCodes.TOO_MANY_ATTEMPTS_TRY_LATER
-      ) {
-        error({
-          message:
-            "  Hint: Too many failed attempts. Wait a few minutes and try again.",
-        });
-      } else if (authError.code === AuthErrorCodes.NETWORK_REQUEST_FAILED) {
-        error({
-          message: "  Hint: Network error. Check your internet connection.",
-        });
-      }
-
-      // Don't halt installation - continue without authentication
-      warn({
-        message:
-          "  Continuing installation without authentication. Backend features will be unavailable.",
-      });
-    }
-  }
-
   // Get current package version to save in config
   const currentVersion = getCurrentPackageVersion();
 
-  // Save config to disk with refresh token (not password)
-  // This ensures we never store passwords, only secure tokens
+  // Save config to disk
   await saveConfig({
-    username,
-    refreshToken: tokenToSave,
-    organizationUrl,
     agents: Object.keys(mergedAgents).length > 0 ? mergedAgents : null,
-    sendSessionTranscript,
     autoupdate: existingConfig?.autoupdate,
-    registryAuths:
-      config.registryAuths ?? existingConfig?.registryAuths ?? null,
     version: currentVersion,
     installDir: config.installDir,
   });
@@ -151,6 +114,15 @@ const installConfig = async (args: { config: Config }): Promise<void> => {
 const uninstallConfig = async (args: { config: Config }): Promise<void> => {
   const { config } = args;
   const configFile = getConfigPath({ installDir: config.installDir });
+  const legacyConfigFile = getLegacyConfigPath({
+    installDir: config.installDir,
+  });
+
+  // Clean up legacy config file if it exists
+  if (existsSync(legacyConfigFile)) {
+    unlinkSync(legacyConfigFile);
+    info({ message: `✓ Removed legacy config file: ${legacyConfigFile}` });
+  }
 
   if (!existsSync(configFile)) {
     info({ message: "Config file not found (may not exist)" });
@@ -196,12 +168,7 @@ const uninstallConfig = async (args: { config: Config }): Promise<void> => {
 
   // Otherwise, update the config with remaining agents (preserve version)
   await saveConfig({
-    username: existingConfig?.auth?.username ?? null,
-    refreshToken: existingConfig?.auth?.refreshToken ?? null,
-    organizationUrl: existingConfig?.auth?.organizationUrl ?? null,
-    sendSessionTranscript: existingConfig?.sendSessionTranscript ?? null,
     autoupdate: existingConfig?.autoupdate ?? null,
-    registryAuths: existingConfig?.registryAuths ?? null,
     agents: remainingAgentsObj,
     version: existingConfig?.version ?? null,
     installDir: config.installDir,
@@ -217,7 +184,7 @@ const uninstallConfig = async (args: { config: Config }): Promise<void> => {
  */
 export const configLoader: Loader = {
   name: "config",
-  description: "Configuration file (.nori-config.json)",
+  description: "Configuration file (.nojo-config.json)",
   run: installConfig,
   uninstall: uninstallConfig,
 };

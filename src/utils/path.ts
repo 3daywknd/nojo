@@ -54,12 +54,12 @@ export const normalizeInstallDir = (args: {
 };
 
 /**
- * Get all directories that have Nori installations, starting from current directory
+ * Get all directories that have nojo installations, starting from current directory
  * Searches current directory first, then ancestors
  * @param args - Configuration arguments
  * @param args.currentDir - The directory to start searching from (defaults to process.cwd())
  *
- * @returns Array of paths to directories with Nori installations, ordered from closest to furthest.
+ * @returns Array of paths to directories with nojo installations, ordered from closest to furthest.
  *   Returns empty array if no installations found.
  */
 export const getInstallDirs = (args?: {
@@ -68,26 +68,36 @@ export const getInstallDirs = (args?: {
   const currentDir = args?.currentDir || process.cwd();
   const results: Array<string> = [];
 
-  // Inline hasNoriInstallation logic
+  // Inline hasNojoInstallation logic
   const hasCurrentInstallation = (() => {
-    // Check for .nori-config.json (new style)
-    const newConfigPath = path.join(currentDir, ".nori-config.json");
-    if (fs.existsSync(newConfigPath)) {
+    // Check for .claude/.nojo-config.json (current location)
+    const currentConfigPath = path.join(
+      currentDir,
+      ".claude",
+      ".nojo-config.json",
+    );
+    if (fs.existsSync(currentConfigPath)) {
       return true;
     }
 
-    // Check for nori-config.json (legacy style)
-    const legacyConfigPath = path.join(currentDir, "nori-config.json");
-    if (fs.existsSync(legacyConfigPath)) {
+    // Check for .nojo-config.json (legacy - pre-migration)
+    const legacyNewConfigPath = path.join(currentDir, ".nojo-config.json");
+    if (fs.existsSync(legacyNewConfigPath)) {
       return true;
     }
 
-    // Check for .claude/CLAUDE.md with NORI-AI MANAGED BLOCK
+    // Check for nojo-config.json (legacy - very old)
+    const legacyOldConfigPath = path.join(currentDir, "nojo-config.json");
+    if (fs.existsSync(legacyOldConfigPath)) {
+      return true;
+    }
+
+    // Check for .claude/CLAUDE.md with NOJO MANAGED BLOCK
     const claudeMdPath = path.join(currentDir, ".claude", "CLAUDE.md");
     if (fs.existsSync(claudeMdPath)) {
       try {
         const content = fs.readFileSync(claudeMdPath, "utf-8");
-        if (content.includes("NORI-AI MANAGED BLOCK")) {
+        if (content.includes("NOJO MANAGED BLOCK")) {
           return true;
         }
       } catch {
@@ -106,26 +116,36 @@ export const getInstallDirs = (args?: {
   let checkDir = path.dirname(currentDir);
   let previousDir = "";
   while (checkDir !== previousDir) {
-    // Check for Nori installation in this ancestor directory
+    // Check for nojo installation in this ancestor directory
     const hasAncestorInstallation = (() => {
-      // Check for .nori-config.json (new style)
-      const newConfigPath = path.join(checkDir, ".nori-config.json");
-      if (fs.existsSync(newConfigPath)) {
+      // Check for .claude/.nojo-config.json (current location)
+      const currentConfigPath = path.join(
+        checkDir,
+        ".claude",
+        ".nojo-config.json",
+      );
+      if (fs.existsSync(currentConfigPath)) {
         return true;
       }
 
-      // Check for nori-config.json (legacy style)
-      const legacyConfigPath = path.join(checkDir, "nori-config.json");
-      if (fs.existsSync(legacyConfigPath)) {
+      // Check for .nojo-config.json (legacy - pre-migration)
+      const legacyNewConfigPath = path.join(checkDir, ".nojo-config.json");
+      if (fs.existsSync(legacyNewConfigPath)) {
         return true;
       }
 
-      // Check for .claude/CLAUDE.md with NORI-AI MANAGED BLOCK
+      // Check for nojo-config.json (legacy - very old)
+      const legacyOldConfigPath = path.join(checkDir, "nojo-config.json");
+      if (fs.existsSync(legacyOldConfigPath)) {
+        return true;
+      }
+
+      // Check for .claude/CLAUDE.md with NOJO MANAGED BLOCK
       const claudeMdPath = path.join(checkDir, ".claude", "CLAUDE.md");
       if (fs.existsSync(claudeMdPath)) {
         try {
           const content = fs.readFileSync(claudeMdPath, "utf-8");
-          if (content.includes("NORI-AI MANAGED BLOCK")) {
+          if (content.includes("NOJO MANAGED BLOCK")) {
             return true;
           }
         } catch {
