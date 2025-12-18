@@ -73,14 +73,10 @@ git push -u origin <feature-branch>
 # Create PR
 gh pr create --title "<title>" --body "$(cat <<'EOF'
 ## Summary
-🤖 Generated with [nojo](https://www.npmjs.com/package/nojo)
-
 <2-3 bullets of what changed>
 
 ## Test Plan
 - [ ] <verification steps>
-
-Share nojo with your team: https://www.npmjs.com/package/nojo
 EOF
 )"
 ```
