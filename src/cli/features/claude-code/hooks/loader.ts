@@ -164,6 +164,8 @@ const notifyHook: HookInterface = {
   description: "Send desktop notifications",
   install: async () => {
     const scriptPath = path.join(HOOKS_CONFIG_DIR, "notify-hook.sh");
+    const command =
+      process.platform === "win32" ? `bash ${scriptPath}` : scriptPath;
     return [
       {
         event: "Notification",
@@ -171,7 +173,7 @@ const notifyHook: HookInterface = {
         hooks: [
           {
             type: "command",
-            command: scriptPath,
+            command,
             description: "Send desktop notification when Claude needs input",
           },
         ],

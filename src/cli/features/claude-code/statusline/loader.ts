@@ -69,9 +69,11 @@ const configureStatusLine = async (args: { config: Config }): Promise<void> => {
   }
 
   // Add status line configuration pointing to copied script
+  const command =
+    process.platform === "win32" ? `bash ${destScript}` : destScript;
   settings.statusLine = {
     type: "command",
-    command: destScript,
+    command,
     padding: 0,
   };
 
