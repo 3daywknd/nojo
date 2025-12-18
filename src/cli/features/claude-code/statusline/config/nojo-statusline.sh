@@ -47,14 +47,24 @@ usage=$(echo "$input" | jq '.context_window.current_usage')
 
 # === PROFILE DETECTION ===
 profile=""
+config_file=""
+
+# First, try to find config by searching upward from workspace
 if [ -n "$dir" ] && [ -d "$dir" ]; then
     install_dir=$(find_install_dir "$dir")
     if [ -n "$install_dir" ]; then
         config_file="$install_dir/.nojo-config.json"
-        if [ -f "$config_file" ]; then
-            profile=$(jq -r '.agents["claude-code"].profile.baseProfile // .profile.baseProfile // ""' "$config_file" 2>/dev/null)
-        fi
     fi
+fi
+
+# Fallback: check ~/.claude/.nojo-config.json
+if [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
+    config_file="$HOME/.claude/.nojo-config.json"
+fi
+
+# Read profile from config
+if [ -f "$config_file" ]; then
+    profile=$(jq -r '.agents["claude-code"].profile.baseProfile // .profile.baseProfile // ""' "$config_file" 2>/dev/null)
 fi
 
 # === CONTEXT BAR ===
