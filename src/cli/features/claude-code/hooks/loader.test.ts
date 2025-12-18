@@ -85,24 +85,9 @@ describe("hooksLoader", () => {
       // Free mode should NOT have PreCompact hooks (only paid has summarize on PreCompact)
       expect(settings.hooks.PreCompact).toBeUndefined();
 
-      // Free mode SHOULD have SessionEnd hooks (statistics hooks)
-      expect(settings.hooks.SessionEnd).toBeDefined();
-
-      // Free mode SHOULD have SessionStart hooks (autoupdate)
+      // Free mode SHOULD have SessionStart hooks (warnings)
       expect(settings.hooks.SessionStart).toBeDefined();
       expect(settings.hooks.SessionStart.length).toBeGreaterThan(0);
-
-      let hasAutoupdateHook = false;
-      for (const hookConfig of settings.hooks.SessionStart) {
-        if (hookConfig.hooks) {
-          for (const hook of hookConfig.hooks) {
-            if (hook.command && hook.command.includes("autoupdate")) {
-              hasAutoupdateHook = true;
-            }
-          }
-        }
-      }
-      expect(hasAutoupdateHook).toBe(true);
 
       // Free mode SHOULD have Notification hooks
       expect(settings.hooks.Notification).toBeDefined();
@@ -220,136 +205,6 @@ describe("hooksLoader", () => {
         }
       }
       expect(hasNestedWarningHook).toBe(true);
-    });
-
-    it("should configure PreToolUse hook for commit-author (paid)", async () => {
-      const config: Config = {
-        installDir: tempDir,
-      };
-
-      await hooksLoader.run({ config });
-
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const settings = JSON.parse(content);
-
-      // Verify PreToolUse hooks include commit-author
-      expect(settings.hooks.PreToolUse).toBeDefined();
-      expect(settings.hooks.PreToolUse.length).toBeGreaterThan(0);
-
-      // Find commit-author hook
-      let hasCommitAuthorHook = false;
-      for (const hookConfig of settings.hooks.PreToolUse) {
-        if (hookConfig.matcher === "Bash" && hookConfig.hooks) {
-          for (const hook of hookConfig.hooks) {
-            if (hook.command && hook.command.includes("commit-author")) {
-              hasCommitAuthorHook = true;
-              expect(hook.description).toContain("nojo");
-            }
-          }
-        }
-      }
-      expect(hasCommitAuthorHook).toBe(true);
-    });
-
-    it("should configure PreToolUse hook for commit-author (free)", async () => {
-      const config: Config = { installDir: tempDir };
-
-      await hooksLoader.run({ config });
-
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const settings = JSON.parse(content);
-
-      // Verify PreToolUse hooks include commit-author
-      expect(settings.hooks.PreToolUse).toBeDefined();
-      expect(settings.hooks.PreToolUse.length).toBeGreaterThan(0);
-
-      // Find commit-author hook
-      let hasCommitAuthorHook = false;
-      for (const hookConfig of settings.hooks.PreToolUse) {
-        if (hookConfig.matcher === "Bash" && hookConfig.hooks) {
-          for (const hook of hookConfig.hooks) {
-            if (hook.command && hook.command.includes("commit-author")) {
-              hasCommitAuthorHook = true;
-              expect(hook.description).toContain("nojo");
-            }
-          }
-        }
-      }
-      expect(hasCommitAuthorHook).toBe(true);
-    });
-
-    it("should configure statistics-notification and statistics hooks for paid installation", async () => {
-      const config: Config = {
-        installDir: tempDir,
-      };
-
-      await hooksLoader.run({ config });
-
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const settings = JSON.parse(content);
-
-      // Verify SessionEnd hooks include statistics hooks
-      expect(settings.hooks.SessionEnd).toBeDefined();
-
-      let hasStatisticsNotificationHook = false;
-      let hasStatisticsHook = false;
-      for (const hookConfig of settings.hooks.SessionEnd) {
-        if (hookConfig.hooks) {
-          for (const hook of hookConfig.hooks) {
-            if (
-              hook.command &&
-              hook.command.includes("statistics-notification")
-            ) {
-              hasStatisticsNotificationHook = true;
-            }
-            if (
-              hook.command &&
-              hook.command.includes("statistics.js") &&
-              !hook.command.includes("statistics-notification")
-            ) {
-              hasStatisticsHook = true;
-            }
-          }
-        }
-      }
-      expect(hasStatisticsNotificationHook).toBe(true);
-      expect(hasStatisticsHook).toBe(true);
-    });
-
-    it("should configure statistics-notification and statistics hooks for free installation", async () => {
-      const config: Config = { installDir: tempDir };
-
-      await hooksLoader.run({ config });
-
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const settings = JSON.parse(content);
-
-      // Verify SessionEnd hooks include statistics hooks
-      expect(settings.hooks.SessionEnd).toBeDefined();
-
-      let hasStatisticsNotificationHook = false;
-      let hasStatisticsHook = false;
-      for (const hookConfig of settings.hooks.SessionEnd) {
-        if (hookConfig.hooks) {
-          for (const hook of hookConfig.hooks) {
-            if (
-              hook.command &&
-              hook.command.includes("statistics-notification")
-            ) {
-              hasStatisticsNotificationHook = true;
-            }
-            if (
-              hook.command &&
-              hook.command.includes("statistics.js") &&
-              !hook.command.includes("statistics-notification")
-            ) {
-              hasStatisticsHook = true;
-            }
-          }
-        }
-      }
-      expect(hasStatisticsNotificationHook).toBe(true);
-      expect(hasStatisticsHook).toBe(true);
     });
   });
 
@@ -481,64 +336,6 @@ describe("hooksLoader", () => {
       expect(result.errors).not.toBeNull();
       expect(result.errors?.length).toBeGreaterThan(0);
       expect(result.errors?.[0]).toContain("Settings file not found");
-    });
-
-    it("should return invalid when includeCoAuthoredBy is not set to false", async () => {
-      const config: Config = {
-        installDir: tempDir,
-      };
-
-      // Install hooks
-      await hooksLoader.run({ config });
-
-      // Modify settings to remove includeCoAuthoredBy
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const settings = JSON.parse(content);
-      delete settings.includeCoAuthoredBy;
-      await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2));
-
-      // Validate
-      if (hooksLoader.validate == null) {
-        throw new Error("validate method not implemented");
-      }
-
-      const result = await hooksLoader.validate({ config });
-
-      expect(result.valid).toBe(false);
-      expect(result.message).toContain("issues");
-      expect(result.errors).not.toBeNull();
-      expect(
-        result.errors?.some((e) => e.includes("includeCoAuthoredBy")),
-      ).toBe(true);
-    });
-
-    it("should return invalid when includeCoAuthoredBy is set to true", async () => {
-      const config: Config = {
-        installDir: tempDir,
-      };
-
-      // Install hooks
-      await hooksLoader.run({ config });
-
-      // Modify settings to set includeCoAuthoredBy to true
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const settings = JSON.parse(content);
-      settings.includeCoAuthoredBy = true;
-      await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2));
-
-      // Validate
-      if (hooksLoader.validate == null) {
-        throw new Error("validate method not implemented");
-      }
-
-      const result = await hooksLoader.validate({ config });
-
-      expect(result.valid).toBe(false);
-      expect(result.message).toContain("issues");
-      expect(result.errors).not.toBeNull();
-      expect(
-        result.errors?.some((e) => e.includes("includeCoAuthoredBy")),
-      ).toBe(true);
     });
 
     it("should return invalid when hooks are not configured", async () => {

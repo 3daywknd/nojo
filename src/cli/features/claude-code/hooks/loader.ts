@@ -107,30 +107,6 @@ const summarizeHook: HookInterface = {
 };
 
 /**
- * Autoupdate hook - checks for package updates
- */
-const autoupdateHook: HookInterface = {
-  name: "autoupdate",
-  description: "Check for nojo updates",
-  install: async () => {
-    const scriptPath = path.join(HOOKS_CONFIG_DIR, "autoupdate.js");
-    return [
-      {
-        event: "SessionStart",
-        matcher: "startup",
-        hooks: [
-          {
-            type: "command",
-            command: `node ${scriptPath}`,
-            description: "Check for nojo updates on session start",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-/**
  * Nested install warning hook - warns about installations in ancestor directories
  */
 const nestedInstallWarningHook: HookInterface = {
@@ -232,82 +208,6 @@ const slashCommandInterceptHook: HookInterface = {
 };
 
 /**
- * Commit-author hook - remove Claude Code attribution from git commits
- */
-const commitAuthorHook: HookInterface = {
-  name: "commit-author",
-  description: "Remove Claude Code attribution from git commits",
-  install: async () => {
-    const scriptPath = path.join(HOOKS_CONFIG_DIR, "commit-author.js");
-    return [
-      {
-        event: "PreToolUse",
-        matcher: "Bash",
-        hooks: [
-          {
-            type: "command",
-            command: `node ${scriptPath}`,
-            description:
-              "Replace Claude Code co-author attribution with nojo in git commits",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-/**
- * Statistics notification hook - displays user notification for statistics calculation
- */
-const statisticsNotificationHook: HookInterface = {
-  name: "statistics-notification",
-  description: "Notify user about statistics calculation",
-  install: async () => {
-    const scriptPath = path.join(
-      HOOKS_CONFIG_DIR,
-      "statistics-notification.js",
-    );
-    return [
-      {
-        event: "SessionEnd",
-        matcher: "*",
-        hooks: [
-          {
-            type: "command",
-            command: `node ${scriptPath}`,
-            description: "Notify user that statistics are being calculated",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-/**
- * Statistics hook - calculates and displays session statistics
- */
-const statisticsHook: HookInterface = {
-  name: "statistics",
-  description: "Calculate and display session usage statistics",
-  install: async () => {
-    const scriptPath = path.join(HOOKS_CONFIG_DIR, "statistics.js");
-    return [
-      {
-        event: "SessionEnd",
-        matcher: "*",
-        hooks: [
-          {
-            type: "command",
-            command: `node ${scriptPath}`,
-            description: "Calculate and display session usage statistics",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-/**
  * Configure hooks for automatic conversation memorization (paid version)
  * @param args - Configuration arguments
  * @param args.config - Runtime configuration
@@ -335,22 +235,15 @@ const configurePaidHooks = async (args: { config: Config }): Promise<void> => {
     };
   }
 
-  // Disable Claude Code's built-in co-author byline
-  settings.includeCoAuthoredBy = false;
-
   // Install all hooks for paid version
   // Note: notification hooks must run before their async counterparts for proper ordering
   const hooks = [
     summarizeNotificationHook,
     summarizeHook,
-    statisticsNotificationHook,
-    statisticsHook,
-    autoupdateHook,
     nestedInstallWarningHook,
     contextUsageWarningHook,
     notifyHook,
     slashCommandInterceptHook,
-    commitAuthorHook,
   ];
   const hooksConfig: any = {};
 
@@ -383,11 +276,6 @@ const configurePaidHooks = async (args: { config: Config }): Promise<void> => {
   if (settings.hooks.Notification) {
     info({ message: "  - Desktop notifications (on Notification event)" });
   }
-
-  // Check if autoupdate hook was configured
-  if (settings.hooks.SessionStart) {
-    info({ message: "  - Auto-update checks (on SessionStart event)" });
-  }
 };
 
 /**
@@ -416,19 +304,12 @@ const configureFreeHooks = async (args: { config: Config }): Promise<void> => {
     };
   }
 
-  // Disable Claude Code's built-in co-author byline
-  settings.includeCoAuthoredBy = false;
-
-  // Install hooks for free version (statistics, autoupdate, notifications, etc.)
+  // Install hooks for free version
   const hooks = [
-    statisticsNotificationHook,
-    statisticsHook,
-    autoupdateHook,
     nestedInstallWarningHook,
     contextUsageWarningHook,
     notifyHook,
     slashCommandInterceptHook,
-    commitAuthorHook,
   ];
   const hooksConfig: any = {};
 
@@ -450,17 +331,12 @@ const configureFreeHooks = async (args: { config: Config }): Promise<void> => {
 
   await fs.writeFile(claudeSettingsFile, JSON.stringify(settings, null, 2));
   success({
-    message: `✓ Notification hook configured in ${claudeSettingsFile}`,
+    message: `✓ Hooks configured in ${claudeSettingsFile}`,
   });
   info({
     message:
       "Desktop notifications will appear when Claude Code needs your attention",
   });
-
-  // Check if autoupdate hook was configured
-  if (settings.hooks.SessionStart) {
-    info({ message: "  - Auto-update checks (on SessionStart event)" });
-  }
 };
 
 /**
@@ -482,12 +358,6 @@ const removeHooks = async (args: { config: Config }): Promise<void> => {
 
     if (settings.hooks) {
       delete settings.hooks;
-      modified = true;
-    }
-
-    // Remove includeCoAuthoredBy setting
-    if (settings.includeCoAuthoredBy === false) {
-      delete settings.includeCoAuthoredBy;
       modified = true;
     }
 
@@ -557,123 +427,9 @@ const validate = async (args: {
     };
   }
 
-  // Validate expected hooks for paid mode
-  if (false) {
-    const requiredEvents = ["SessionEnd", "PreCompact", "SessionStart"];
-    for (const event of requiredEvents) {
-      if (!settings.hooks[event]) {
-        errors.push(`Missing hook configuration for event: ${event}`);
-      }
-    }
-
-    // Check if SessionEnd has required hooks (summarize and statistics)
-    if (settings.hooks.SessionEnd) {
-      const sessionEndHooks = settings.hooks.SessionEnd;
-      let hasSummarizeNotificationHook = false;
-      let hasSummarizeHook = false;
-      let hasStatisticsNotificationHook = false;
-      let hasStatisticsHook = false;
-
-      for (const hookConfig of sessionEndHooks) {
-        if (hookConfig.hooks) {
-          for (const hook of hookConfig.hooks) {
-            if (
-              hook.command &&
-              hook.command.includes("summarize-notification.js")
-            ) {
-              hasSummarizeNotificationHook = true;
-            }
-            if (
-              hook.command &&
-              hook.command.includes("summarize.js") &&
-              !hook.command.includes("summarize-notification")
-            ) {
-              hasSummarizeHook = true;
-            }
-            if (
-              hook.command &&
-              hook.command.includes("statistics-notification.js")
-            ) {
-              hasStatisticsNotificationHook = true;
-            }
-            if (
-              hook.command &&
-              hook.command.includes("statistics.js") &&
-              !hook.command.includes("statistics-notification")
-            ) {
-              hasStatisticsHook = true;
-            }
-          }
-        }
-      }
-
-      if (!hasSummarizeNotificationHook) {
-        errors.push("Missing summarize-notification hook for SessionEnd event");
-      }
-      if (!hasSummarizeHook) {
-        errors.push("Missing summarize hook for SessionEnd event");
-      }
-      if (!hasStatisticsNotificationHook) {
-        errors.push(
-          "Missing statistics-notification hook for SessionEnd event",
-        );
-      }
-      if (!hasStatisticsHook) {
-        errors.push("Missing statistics hook for SessionEnd event");
-      }
-    }
-  } else {
-    // Free mode - check for SessionStart and SessionEnd (statistics)
-    if (!settings.hooks.SessionStart) {
-      errors.push(
-        "Missing hook configuration for SessionStart event (autoupdate)",
-      );
-    }
-    if (!settings.hooks.SessionEnd) {
-      errors.push(
-        "Missing hook configuration for SessionEnd event (statistics)",
-      );
-    }
-  }
-
-  // Free mode - check for statistics hooks if SessionEnd is present
-  if (!false && settings.hooks.SessionEnd) {
-    const sessionEndHooks = settings.hooks.SessionEnd;
-    let hasStatisticsNotificationHook = false;
-    let hasStatisticsHook = false;
-
-    for (const hookConfig of sessionEndHooks) {
-      if (hookConfig.hooks) {
-        for (const hook of hookConfig.hooks) {
-          if (
-            hook.command &&
-            hook.command.includes("statistics-notification.js")
-          ) {
-            hasStatisticsNotificationHook = true;
-          }
-          if (
-            hook.command &&
-            hook.command.includes("statistics.js") &&
-            !hook.command.includes("statistics-notification")
-          ) {
-            hasStatisticsHook = true;
-          }
-        }
-      }
-    }
-
-    if (!hasStatisticsNotificationHook) {
-      errors.push("Missing statistics-notification hook for SessionEnd event");
-    }
-    if (!hasStatisticsHook) {
-      errors.push("Missing statistics hook for SessionEnd event");
-    }
-  }
-
-  // Check includeCoAuthoredBy setting
-  if (settings.includeCoAuthoredBy !== false) {
-    errors.push("includeCoAuthoredBy should be set to false in settings.json");
-    errors.push('Run "nojo install" to configure git settings');
+  // Check for required SessionStart hooks (nested-install-warning, context-usage-warning)
+  if (!settings.hooks.SessionStart) {
+    errors.push("Missing hook configuration for SessionStart event");
   }
 
   if (errors.length > 0) {
