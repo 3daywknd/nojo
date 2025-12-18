@@ -37,7 +37,7 @@ echo ""
 # STEP 2: TypeScript Compilation
 # ============================================================================
 echo -e "${BLUE}[2/6] Compiling TypeScript...${NC}"
-tsc
+npx tsc
 echo -e "${GREEN}✓ TypeScript compilation complete${NC}"
 echo ""
 
@@ -45,7 +45,7 @@ echo ""
 # STEP 3: Path Alias Resolution
 # ============================================================================
 echo -e "${BLUE}[3/6] Resolving path aliases...${NC}"
-tsc-alias --verbose
+npx tsc-alias --verbose
 
 # Verify no @/ imports remain in production JS files (not test files)
 UNRESOLVED=$(grep -r "from ['\"]@/" build/src --include="*.js" | grep -v "\.test\.js" | grep -v "vi\.mock" || true)

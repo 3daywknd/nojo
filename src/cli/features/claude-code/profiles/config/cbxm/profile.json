@@ -1,0 +1,10 @@
+{
+  "name": "cbxm",
+  "description": "cbxm's preferred settings. Uses Playwright MCP for web testing. Based on amol profile with worktrees, planning, and TDD.",
+  "builtin": false,
+  "mixins": {
+    "base": {},
+    "docs": {},
+    "swe": {}
+  }
+}

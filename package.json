@@ -13,7 +13,7 @@
     "nojo": "./build/src/cli/cli.js"
   },
   "scripts": {
-    "build": "./scripts/build.sh",
+    "build": "bash scripts/build.sh",
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "dev": "tsc && tsc-alias && node build/index.js",
