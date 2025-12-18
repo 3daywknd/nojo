@@ -192,10 +192,9 @@ describe("profilesLoader", () => {
         .catch(() => false);
       expect(profileJsonExists).toBe(true);
 
-      // Verify it has composed content from _base (skills, subagents, slashcommands)
+      // Verify it has composed content from _base (skills, subagents)
       const skillsDir = path.join(seniorSwePath, "skills");
       const subagentsDir = path.join(seniorSwePath, "subagents");
-      const slashcommandsDir = path.join(seniorSwePath, "slashcommands");
 
       expect(
         await fs
@@ -209,12 +208,8 @@ describe("profilesLoader", () => {
           .then(() => true)
           .catch(() => false),
       ).toBe(true);
-      expect(
-        await fs
-          .access(slashcommandsDir)
-          .then(() => true)
-          .catch(() => false),
-      ).toBe(true);
+      // slashcommands dir is optional - may not exist if no mixins provide them
+      // (currently no mixins have slashcommands, but may be added in future)
     });
 
     it("should handle reinstallation (update scenario)", async () => {
@@ -769,205 +764,6 @@ describe("profilesLoader", () => {
       expect(result.valid).toBe(false);
       expect(result.errors).not.toBeNull();
       expect(result.errors?.some((e) => e.includes("permissions"))).toBe(true);
-    });
-  });
-
-  describe.skip("injectConditionalMixins [REMOVED FEATURE]", () => {
-    it("should inject paid mixin for paid user", () => {
-      const metadata = {
-        name: "test-profile",
-        description: "Test profile",
-        mixins: {
-          base: {},
-          docs: {},
-        },
-      };
-
-      const config: Config = {
-        agents: {
-          "claude-code": { profile: { baseProfile: "test-profile" } },
-        },
-        installDir: tempDir,
-      };
-
-      const result = _testing.injectConditionalMixins({ metadata, config });
-
-      expect(result.mixins).toHaveProperty("paid");
-      expect(result.mixins).toHaveProperty("docs-paid");
-    });
-
-    it("should inject docs-paid mixin for paid user with docs category", () => {
-      const metadata = {
-        name: "test-profile",
-        description: "Test profile",
-        mixins: {
-          base: {},
-          docs: {},
-        },
-      };
-
-      const config: Config = {
-        agents: {
-          "claude-code": { profile: { baseProfile: "test-profile" } },
-        },
-        installDir: tempDir,
-      };
-
-      const result = _testing.injectConditionalMixins({ metadata, config });
-
-      expect(result.mixins).toHaveProperty("paid");
-      expect(result.mixins).toHaveProperty("docs-paid");
-      expect(Object.keys(result.mixins).sort()).toEqual([
-        "base",
-        "docs",
-        "docs-paid",
-        "paid",
-      ]);
-    });
-
-    it("should inject swe-paid mixin for paid user with swe category", () => {
-      const metadata = {
-        name: "test-profile",
-        description: "Test profile",
-        mixins: {
-          base: {},
-          swe: {},
-        },
-      };
-
-      const config: Config = {
-        agents: {
-          "claude-code": { profile: { baseProfile: "test-profile" } },
-        },
-        installDir: tempDir,
-      };
-
-      const result = _testing.injectConditionalMixins({ metadata, config });
-
-      expect(result.mixins).toHaveProperty("paid");
-      expect(result.mixins).toHaveProperty("swe-paid");
-      expect(Object.keys(result.mixins).sort()).toEqual([
-        "base",
-        "paid",
-        "swe",
-        "swe-paid",
-      ]);
-    });
-
-    it("should inject multiple tier-specific mixins for paid user with multiple categories", () => {
-      const metadata = {
-        name: "test-profile",
-        description: "Test profile",
-        mixins: {
-          base: {},
-          docs: {},
-          swe: {},
-        },
-      };
-
-      const config: Config = {
-        agents: {
-          "claude-code": { profile: { baseProfile: "test-profile" } },
-        },
-        installDir: tempDir,
-      };
-
-      const result = _testing.injectConditionalMixins({ metadata, config });
-
-      expect(result.mixins).toHaveProperty("paid");
-      expect(result.mixins).toHaveProperty("docs-paid");
-      expect(result.mixins).toHaveProperty("swe-paid");
-      expect(Object.keys(result.mixins).sort()).toEqual([
-        "base",
-        "docs",
-        "docs-paid",
-        "paid",
-        "swe",
-        "swe-paid",
-      ]);
-    });
-
-    it("should not inject tier-specific mixins for free user", () => {
-      const metadata = {
-        name: "test-profile",
-        description: "Test profile",
-        mixins: {
-          base: {},
-          docs: {},
-          swe: {},
-        },
-      };
-
-      const config: Config = {
-        agents: {
-          "claude-code": { profile: { baseProfile: "test-profile" } },
-        },
-        installDir: tempDir,
-      };
-
-      const result = _testing.injectConditionalMixins({ metadata, config });
-
-      expect(result.mixins).not.toHaveProperty("paid");
-      expect(result.mixins).not.toHaveProperty("docs-paid");
-      expect(result.mixins).not.toHaveProperty("swe-paid");
-      expect(Object.keys(result.mixins).sort()).toEqual([
-        "base",
-        "docs",
-        "swe",
-      ]);
-    });
-
-    it("should not duplicate tier-specific mixin if already present", () => {
-      const metadata = {
-        name: "test-profile",
-        description: "Test profile",
-        mixins: {
-          base: {},
-          docs: {},
-          "docs-paid": {}, // Already present
-        },
-      };
-
-      const config: Config = {
-        agents: {
-          "claude-code": { profile: { baseProfile: "test-profile" } },
-        },
-        installDir: tempDir,
-      };
-
-      const result = _testing.injectConditionalMixins({ metadata, config });
-
-      expect(result.mixins).toHaveProperty("paid");
-      expect(result.mixins).toHaveProperty("docs-paid");
-      // Should only have one docs-paid entry
-      expect(
-        Object.keys(result.mixins).filter((k) => k === "docs-paid"),
-      ).toHaveLength(1);
-    });
-
-    it("should not inject tier mixins for base or paid categories", () => {
-      const metadata = {
-        name: "test-profile",
-        description: "Test profile",
-        mixins: {
-          base: {},
-          paid: {},
-        },
-      };
-
-      const config: Config = {
-        agents: {
-          "claude-code": { profile: { baseProfile: "test-profile" } },
-        },
-        installDir: tempDir,
-      };
-
-      const result = _testing.injectConditionalMixins({ metadata, config });
-
-      // Should not create base-paid or paid-paid
-      expect(result.mixins).not.toHaveProperty("base-paid");
-      expect(result.mixins).not.toHaveProperty("paid-paid");
-      expect(Object.keys(result.mixins).sort()).toEqual(["base", "paid"]);
     });
   });
 });

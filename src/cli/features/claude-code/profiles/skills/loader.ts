@@ -278,45 +278,22 @@ const installSkills = async (args: { config: Config }): Promise<void> => {
       continue;
     }
 
-    // Handle paid-prefixed skills
-    //
-    // IMPORTANT: Paid skill scripts are BUNDLED before installation.
-    // The script.js files we're copying here are standalone executables created
-    // by scripts/bundle-skills.ts during the build process. They contain all
-    // dependencies inlined by esbuild, making them portable and executable from
-    // ~/.claude/skills/ without requiring the MCP package context.
-    //
-    // @see scripts/bundle-skills.ts - The bundler that creates standalone scripts
-    // @see src/cli/features/claude-code/profiles/config/_mixins/_paid/skills/paid-recall/script.ts - Bundling docs
+    // Skip paid-prefixed skills (paid features removed)
     if (entry.name.startsWith("paid-")) {
-      if (false) {
-        // Strip paid- prefix when copying
-        const destName = entry.name.replace(/^paid-/, "");
-        const destPath = path.join(claudeSkillsDir, destName);
-        const result = await copyDirWithManifestTracking({
-          src: sourcePath,
-          dest: destPath,
-          installDir: config.installDir,
-          manifest,
-          profileName,
-        });
-        totalPreserved += result.preserved;
-        totalInstalled += result.installed;
-      }
-      // Skip if free tier
-    } else {
-      // Copy non-paid skills for all tiers
-      const destPath = path.join(claudeSkillsDir, entry.name);
-      const result = await copyDirWithManifestTracking({
-        src: sourcePath,
-        dest: destPath,
-        installDir: config.installDir,
-        manifest,
-        profileName,
-      });
-      totalPreserved += result.preserved;
-      totalInstalled += result.installed;
+      continue;
     }
+
+    // Copy skill to destination
+    const destPath = path.join(claudeSkillsDir, entry.name);
+    const result = await copyDirWithManifestTracking({
+      src: sourcePath,
+      dest: destPath,
+      installDir: config.installDir,
+      manifest,
+      profileName,
+    });
+    totalPreserved += result.preserved;
+    totalInstalled += result.installed;
   }
 
   // Save updated manifest
@@ -517,23 +494,16 @@ const validate = async (args: {
         continue;
       }
 
-      // For paid-prefixed skills, check if they exist without prefix (paid tier only)
+      // Skip paid-prefixed skills (paid features removed)
       if (entry.name.startsWith("paid-")) {
-        if (false) {
-          const destName = entry.name.replace(/^paid-/, "");
-          try {
-            await fs.access(path.join(claudeSkillsDir, destName));
-          } catch {
-            errors.push(`Expected skill '${destName}' not found (paid tier)`);
-          }
-        }
-      } else {
-        // Non-paid skills should exist for all tiers
-        try {
-          await fs.access(path.join(claudeSkillsDir, entry.name));
-        } catch {
-          errors.push(`Expected skill '${entry.name}' not found`);
-        }
+        continue;
+      }
+
+      // Non-paid skills should exist
+      try {
+        await fs.access(path.join(claudeSkillsDir, entry.name));
+      } catch {
+        errors.push(`Expected skill '${entry.name}' not found`);
       }
     }
 

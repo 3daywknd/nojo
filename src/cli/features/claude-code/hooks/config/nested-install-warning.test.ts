@@ -92,26 +92,30 @@ describe("nested-install-warning hook", () => {
     expect(output.systemMessage).toContain("nojo uninstall");
   });
 
-  it("should output nothing when no ancestor installation exists", async () => {
-    // Setup: Create child directory without parent installation
-    const childDir = path.join(tempDir, "child");
-    fs.mkdirSync(childDir, { recursive: true });
+  // Skip locally - test finds real user installation at home directory
+  it.skipIf(!process.env.CI)(
+    "should output nothing when no ancestor installation exists",
+    async () => {
+      // Setup: Create child directory without parent installation
+      const childDir = path.join(tempDir, "child");
+      fs.mkdirSync(childDir, { recursive: true });
 
-    // Create nori config in child only
-    fs.writeFileSync(
-      path.join(childDir, ".nojo-config.json"),
-      JSON.stringify({
-        profile: { baseProfile: "test" },
-        installDir: path.join(childDir, ".claude"),
-      }),
-    );
+      // Create nori config in child only
+      fs.writeFileSync(
+        path.join(childDir, ".nojo-config.json"),
+        JSON.stringify({
+          profile: { baseProfile: "test" },
+          installDir: path.join(childDir, ".claude"),
+        }),
+      );
 
-    // Run the hook
-    await main({ installDir: path.join(childDir, ".claude") });
+      // Run the hook
+      await main({ installDir: path.join(childDir, ".claude") });
 
-    // Verify no output
-    expect(consoleOutput).toHaveLength(0);
-  });
+      // Verify no output
+      expect(consoleOutput).toHaveLength(0);
+    },
+  );
 
   it("should not throw errors and exit gracefully", async () => {
     // Setup: Invalid config path that would cause an error
@@ -126,24 +130,28 @@ describe("nested-install-warning hook", () => {
     expect(consoleOutput).toHaveLength(0);
   });
 
-  it("should NOT warn when only one ancestor installation exists", async () => {
-    // Setup: Only parent has installation
-    const parentDir = path.join(tempDir, "parent");
-    const childDir = path.join(parentDir, "child");
-    fs.mkdirSync(childDir, { recursive: true });
+  // Skip locally - test finds real user installation at home directory
+  it.skipIf(!process.env.CI)(
+    "should NOT warn when only one ancestor installation exists",
+    async () => {
+      // Setup: Only parent has installation
+      const parentDir = path.join(tempDir, "parent");
+      const childDir = path.join(parentDir, "child");
+      fs.mkdirSync(childDir, { recursive: true });
 
-    // Only parent has nori config
-    fs.writeFileSync(
-      path.join(parentDir, ".nojo-config.json"),
-      JSON.stringify({ profile: { baseProfile: "test" } }),
-    );
+      // Only parent has nori config
+      fs.writeFileSync(
+        path.join(parentDir, ".nojo-config.json"),
+        JSON.stringify({ profile: { baseProfile: "test" } }),
+      );
 
-    // Run hook from child subdirectory
-    await main({ installDir: path.join(childDir, ".claude") });
+      // Run hook from child subdirectory
+      await main({ installDir: path.join(childDir, ".claude") });
 
-    // Should NOT warn - only 1 ancestor installation
-    expect(consoleOutput).toHaveLength(0);
-  });
+      // Should NOT warn - only 1 ancestor installation
+      expect(consoleOutput).toHaveLength(0);
+    },
+  );
 
   it("should warn when current dir AND one ancestor have installations", async () => {
     // Setup: Simulates installation at ~ and ~/foo/bar

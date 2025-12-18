@@ -68,26 +68,6 @@ describe("configLoader", () => {
       });
     });
 
-    it.skip("should include sendSessionTranscript when provided [REMOVED - sendSessionTranscript]", async () => {
-      // Test removed - sendSessionTranscript property no longer exists
-    });
-
-    it.skip("should NOT include sendSessionTranscript when not provided [REMOVED - sendSessionTranscript]", async () => {
-      // Test removed - sendSessionTranscript property no longer exists
-    });
-
-    it.skip("should preserve existing sendSessionTranscript preference [REMOVED - sendSessionTranscript]", async () => {
-      // Test removed - sendSessionTranscript property no longer exists
-    });
-
-    it.skip("should save registryAuths to config file [REMOVED - registryAuths]", async () => {
-      // Test removed - registryAuths property no longer exists
-    });
-
-    it.skip("should preserve existing registryAuths when not provided in new config [REMOVED - registryAuths]", async () => {
-      // Test removed - registryAuths property no longer exists
-    });
-
     it("should save agents to config file", async () => {
       const config: Config = {
         installDir: tempDir,

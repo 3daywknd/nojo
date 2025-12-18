@@ -99,10 +99,6 @@ describe("subagentsLoader", () => {
       expect(hasCodebaseAnalyzer).toBe(true);
     });
 
-    it.skip("should create agents directory and copy subagent files for paid installation [REMOVED - paid features]", async () => {
-      // Test removed - paid features no longer exist
-    });
-
     it("should copy more subagents for paid than free installation", async () => {
       const freeConfig: Config = {
         installDir: tempDir,

@@ -142,26 +142,31 @@ describe("nojo-install-location", () => {
   });
 
   describe("error handling", () => {
-    it("should return error when no installation found", async () => {
-      const noInstallDir = await fs.mkdtemp(
-        path.join(tmpdir(), "nori-no-install-"),
-      );
-
-      try {
-        const input = createInput({
-          prompt: "/nori-install-location",
-          cwd: noInstallDir,
-        });
-        const result = await nojoInstallLocation.run({ input });
-
-        expect(result).not.toBeNull();
-        expect(result!.decision).toBe("block");
-        expect(stripAnsi(result!.reason!)).toContain(
-          "No nojo installation found",
+    // Skip locally - test finds real user installation at ~/.claude
+    // Only run in CI where no real installation exists
+    it.skipIf(!process.env.CI)(
+      "should return error when no installation found",
+      async () => {
+        const noInstallDir = await fs.mkdtemp(
+          path.join(tmpdir(), "nori-no-install-"),
         );
-      } finally {
-        await fs.rm(noInstallDir, { recursive: true, force: true });
-      }
-    });
+
+        try {
+          const input = createInput({
+            prompt: "/nori-install-location",
+            cwd: noInstallDir,
+          });
+          const result = await nojoInstallLocation.run({ input });
+
+          expect(result).not.toBeNull();
+          expect(result!.decision).toBe("block");
+          expect(stripAnsi(result!.reason!)).toContain(
+            "No nojo installation found",
+          );
+        } finally {
+          await fs.rm(noInstallDir, { recursive: true, force: true });
+        }
+      },
+    );
   });
 });

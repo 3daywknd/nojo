@@ -58,10 +58,6 @@ describe("hooksLoader", () => {
   });
 
   describe("run", () => {
-    it.skip("should configure hooks for paid installation [REMOVED - summarize hooks]", async () => {
-      // Test removed - summarize and summarize-notification hooks no longer exist
-    });
-
     it("should configure hooks for free installation", async () => {
       const config: Config = { installDir: tempDir };
 
@@ -141,11 +137,7 @@ describe("hooksLoader", () => {
       expect(settings.hooks.Notification).toBeDefined();
     });
 
-    it.skip("should handle switching from free to paid installation [REMOVED - paid features]", async () => {
-      // Test removed - paid features (PreCompact hooks) no longer exist
-    });
-
-    it("should configure UserPromptSubmit hook for slash command interception (paid)", async () => {
+    it("should configure UserPromptSubmit hook for slash command interception ", async () => {
       const config: Config = {
         installDir: tempDir,
       };
@@ -387,10 +379,6 @@ describe("hooksLoader", () => {
       expect(result.message).toContain("has issues");
       expect(result.errors).not.toBeNull();
       expect(result.errors?.length).toBeGreaterThan(0);
-    });
-
-    it.skip("should return invalid when SessionEnd hooks are incomplete (paid mode) [REMOVED - summarize hooks]", async () => {
-      // Test removed - summarize and summarize-notification hooks no longer exist
     });
 
     it("should return invalid for free mode when SessionStart hook is missing", async () => {

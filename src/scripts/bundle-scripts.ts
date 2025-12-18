@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Paid Skills Bundler - See bundle-skills-README.md for full documentation
+// Hook Scripts Bundler - Bundles hook scripts into standalone executables
 
 import { readFileSync } from "fs";
 
@@ -8,12 +8,12 @@ import { build } from "esbuild";
 import { glob } from "glob";
 
 /**
- * Bundle a single skill script
+ * Bundle a single script
  *
  * @param args - Bundle arguments
  * @param args.scriptPath - Path to the compiled script.js file
  */
-const bundleSkill = async (args: { scriptPath: string }): Promise<void> => {
+const bundleScript = async (args: { scriptPath: string }): Promise<void> => {
   const { scriptPath } = args;
 
   console.log(`Bundling: ${scriptPath}`);
@@ -64,30 +64,8 @@ const bundleSkill = async (args: { scriptPath: string }): Promise<void> => {
  */
 const main = async (): Promise<void> => {
   console.log("=".repeat(60));
-  console.log("Bundling Paid Skill Scripts and Hook Scripts");
+  console.log("Bundling Hook Scripts");
   console.log("=".repeat(60));
-
-  // Find all paid skill script files in the build output across all tier-specific mixins
-  // Patterns:
-  // - build/src/cli/features/claude-code/profiles/config/_mixins/_paid/skills/paid-*/script.js
-  // - build/src/cli/features/claude-code/profiles/config/_mixins/_docs-paid/skills/paid-*/script.js
-  // - build/src/cli/features/claude-code/profiles/config/_mixins/_docs-paid/skills/nori-sync-docs/script.js (special case: not paid- prefixed)
-  const skillPatterns = [
-    "build/src/cli/features/claude-code/profiles/config/_mixins/_paid/skills/paid-*/script.js",
-    "build/src/cli/features/claude-code/profiles/config/_mixins/_docs-paid/skills/paid-*/script.js",
-    "build/src/cli/features/claude-code/profiles/config/_mixins/_docs-paid/skills/nori-sync-docs/script.js",
-  ];
-
-  const skillFilesArrays = await Promise.all(
-    skillPatterns.map((pattern) =>
-      glob(pattern, {
-        cwd: process.cwd(),
-        absolute: true,
-      }),
-    ),
-  );
-
-  const skillFiles = skillFilesArrays.flat();
 
   // Find all hook script files in the build output
   // Pattern: build/src/cli/features/claude-code/hooks/config/*.js (excluding test files)
@@ -104,36 +82,23 @@ const main = async (): Promise<void> => {
     (file: string) => !file.endsWith(".test.js"),
   );
 
-  const allFiles = [...skillFiles, ...filteredHookFiles];
-
-  if (allFiles.length === 0) {
-    console.warn("⚠ No scripts found to bundle");
-    console.warn("Expected patterns:");
-    console.warn(
-      "  - build/src/cli/features/claude-code/profiles/config/_mixins/_paid/skills/paid-*/script.js",
-    );
-    console.warn(
-      "  - build/src/cli/features/claude-code/profiles/config/_mixins/_docs-paid/skills/paid-*/script.js",
-    );
-    console.warn(
-      "  - build/src/cli/features/claude-code/profiles/config/_mixins/_docs-paid/skills/nori-sync-docs/script.js",
-    );
+  if (filteredHookFiles.length === 0) {
+    console.warn("No hook scripts found to bundle");
+    console.warn("Expected pattern:");
     console.warn("  - build/src/cli/features/claude-code/hooks/config/*.js");
     return;
   }
 
-  console.log(`Found ${skillFiles.length} skill script(s) to bundle`);
-  console.log(`Found ${filteredHookFiles.length} hook script(s) to bundle`);
-  console.log(`Total: ${allFiles.length} script(s)\n`);
+  console.log(`Found ${filteredHookFiles.length} hook script(s) to bundle\n`);
 
   // Bundle each script
-  for (const scriptPath of allFiles) {
-    await bundleSkill({ scriptPath });
+  for (const scriptPath of filteredHookFiles) {
+    await bundleScript({ scriptPath });
   }
 
   console.log("\n" + "=".repeat(60));
   console.log(
-    `✓ Successfully bundled ${allFiles.length} script(s) (${skillFiles.length} skills, ${filteredHookFiles.length} hooks)`,
+    `Successfully bundled ${filteredHookFiles.length} hook script(s)`,
   );
   console.log("=".repeat(60));
 };
@@ -146,4 +111,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   });
 }
 
-export { bundleSkill, main };
+export { bundleScript, main };
