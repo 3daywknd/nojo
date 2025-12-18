@@ -404,7 +404,7 @@ export const validateConfig = async (args: {
 
   return {
     valid: true,
-    message: "Config is valid for paid mode",
+    message: "Config is valid",
     errors: null,
   };
 };

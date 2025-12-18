@@ -37,7 +37,9 @@ describe("normalizeInstallDir", () => {
   });
 });
 
-describe("getInstallDirs", () => {
+// Skip locally - tests find real user installation at home directory
+// Only run in CI where no real installation exists
+describe.skipIf(!process.env.CI)("getInstallDirs", () => {
   let tempDir: string;
 
   beforeEach(() => {

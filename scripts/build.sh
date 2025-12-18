@@ -61,9 +61,9 @@ echo ""
 # ============================================================================
 # STEP 4: Bundle Scripts
 # ============================================================================
-echo -e "${BLUE}[4/6] Bundling scripts...${NC}"
-node build/src/scripts/bundle-skills.js
-echo -e "${GREEN}✓ Scripts bundled${NC}"
+echo -e "${BLUE}[4/6] Bundling hook scripts...${NC}"
+node build/src/scripts/bundle-scripts.js
+echo -e "${GREEN}✓ Hook scripts bundled${NC}"
 echo ""
 
 # ============================================================================

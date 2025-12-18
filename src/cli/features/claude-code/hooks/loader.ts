@@ -47,66 +47,6 @@ type HookInterface = {
 };
 
 /**
- * Summarize notification hook - displays user notification for transcript saving
- */
-const summarizeNotificationHook: HookInterface = {
-  name: "summarize-notification",
-  description: "Notify user about transcript saving",
-  install: async () => {
-    const scriptPath = path.join(HOOKS_CONFIG_DIR, "summarize-notification.js");
-    return [
-      {
-        event: "SessionEnd",
-        matcher: "*",
-        hooks: [
-          {
-            type: "command",
-            command: `node ${scriptPath}`,
-            description: "Notify user that transcript is being saved",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-/**
- * Summarize hook - memorizes conversations to nojo (async)
- */
-const summarizeHook: HookInterface = {
-  name: "summarize",
-  description: "Memorize conversations to nojo",
-  install: async () => {
-    const scriptPath = path.join(HOOKS_CONFIG_DIR, "summarize.js");
-    return [
-      {
-        event: "SessionEnd",
-        matcher: "*",
-        hooks: [
-          {
-            type: "command",
-            command: `node ${scriptPath} SessionEnd`,
-            description: "Memorize session summary to nojo",
-          },
-        ],
-      },
-      {
-        event: "PreCompact",
-        matcher: "auto",
-        hooks: [
-          {
-            type: "command",
-            command: `node ${scriptPath} PreCompact`,
-            description:
-              "Memorize conversation before context compaction to nojo",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-/**
  * Nested install warning hook - warns about installations in ancestor directories
  */
 const nestedInstallWarningHook: HookInterface = {
@@ -210,82 +150,11 @@ const slashCommandInterceptHook: HookInterface = {
 };
 
 /**
- * Configure hooks for automatic conversation memorization (paid version)
+ * Configure hooks for Claude Code
  * @param args - Configuration arguments
  * @param args.config - Runtime configuration
  */
-const configurePaidHooks = async (args: { config: Config }): Promise<void> => {
-  const { config: _config } = args;
-  const claudeDir = getClaudeHomeDir();
-  const claudeSettingsFile = getClaudeHomeSettingsFile();
-
-  info({
-    message: "Configuring hooks for automatic conversation memorization...",
-  });
-
-  // Create .claude directory if it doesn't exist
-  await fs.mkdir(claudeDir, { recursive: true });
-
-  // Initialize settings file if it doesn't exist
-  let settings: any = {};
-  try {
-    const content = await fs.readFile(claudeSettingsFile, "utf-8");
-    settings = JSON.parse(content);
-  } catch {
-    settings = {
-      $schema: "https://json.schemastore.org/claude-code-settings.json",
-    };
-  }
-
-  // Install all hooks for paid version
-  // Note: notification hooks must run before their async counterparts for proper ordering
-  const hooks = [
-    summarizeNotificationHook,
-    summarizeHook,
-    nestedInstallWarningHook,
-    contextUsageWarningHook,
-    notifyHook,
-    slashCommandInterceptHook,
-  ];
-  const hooksConfig: any = {};
-
-  for (const hook of hooks) {
-    const configs = await hook.install();
-    for (const config of configs) {
-      if (!hooksConfig[config.event]) {
-        hooksConfig[config.event] = [];
-      }
-      hooksConfig[config.event].push({
-        matcher: config.matcher,
-        hooks: config.hooks,
-      });
-    }
-  }
-
-  // Merge hooks into settings
-  settings.hooks = hooksConfig;
-
-  await fs.writeFile(claudeSettingsFile, JSON.stringify(settings, null, 2));
-  success({ message: `✓ Hooks configured in ${claudeSettingsFile}` });
-  info({ message: "Hooks are configured to automatically memorize:" });
-  info({ message: "  - Session summaries (on SessionEnd event)" });
-  info({
-    message:
-      "  - Conversation summaries before context compaction (on PreCompact event)",
-  });
-
-  // Check if notification hook was configured
-  if (settings.hooks.Notification) {
-    info({ message: "  - Desktop notifications (on Notification event)" });
-  }
-};
-
-/**
- * Configure notification-only hooks (free version)
- * @param args - Configuration arguments
- * @param args.config - Runtime configuration
- */
-const configureFreeHooks = async (args: { config: Config }): Promise<void> => {
+const configureHooks = async (args: { config: Config }): Promise<void> => {
   const { config: _config } = args;
   const claudeDir = getClaudeHomeDir();
   const claudeSettingsFile = getClaudeHomeSettingsFile();
@@ -306,7 +175,7 @@ const configureFreeHooks = async (args: { config: Config }): Promise<void> => {
     };
   }
 
-  // Install hooks for free version
+  // Install hooks
   const hooks = [
     nestedInstallWarningHook,
     contextUsageWarningHook,
@@ -457,12 +326,7 @@ export const hooksLoader: Loader = {
   description: "Claude Code hooks (memorization, notifications, etc.)",
   run: async (args: { config: Config }) => {
     const { config } = args;
-
-    if (false) {
-      await configurePaidHooks({ config });
-    } else {
-      await configureFreeHooks({ config });
-    }
+    await configureHooks({ config });
   },
   uninstall: async (args: { config: Config }) => {
     await removeHooks(args);
