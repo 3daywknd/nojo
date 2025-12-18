@@ -41,6 +41,76 @@ const getConfigDir = (args: {
 };
 
 /**
+ * Recursively copy slash commands from source to destination
+ * Handles nested directories (e.g., nojo/init-docs.md -> /nojo/init-docs)
+ *
+ * @param args - Configuration arguments
+ * @param args.srcDir - Source directory containing slash commands
+ * @param args.destDir - Destination directory to copy commands to
+ * @param args.installDir - Installation directory for template substitution
+ * @param args.prefix - Command prefix for nested directories (e.g., "nojo")
+ *
+ * @returns Count of registered and skipped commands
+ */
+const copySlashCommandsRecursive = async (args: {
+  srcDir: string;
+  destDir: string;
+  installDir: string;
+  prefix?: string | null;
+}): Promise<{ registered: number; skipped: number }> => {
+  const { srcDir, destDir, installDir, prefix } = args;
+  let registered = 0;
+  let skipped = 0;
+
+  let entries: Array<string>;
+  try {
+    entries = await fs.readdir(srcDir);
+  } catch {
+    return { registered, skipped };
+  }
+
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry);
+    const stat = await fs.stat(srcPath);
+
+    if (stat.isDirectory()) {
+      // Recurse into subdirectory
+      const subDestDir = path.join(destDir, entry);
+      await fs.mkdir(subDestDir, { recursive: true });
+      const subResult = await copySlashCommandsRecursive({
+        srcDir: srcPath,
+        destDir: subDestDir,
+        installDir,
+        prefix: prefix ? `${prefix}/${entry}` : entry,
+      });
+      registered += subResult.registered;
+      skipped += subResult.skipped;
+    } else if (entry.endsWith(".md") && entry !== "docs.md") {
+      // Copy markdown file with template substitution
+      const destPath = path.join(destDir, entry);
+      try {
+        const content = await fs.readFile(srcPath, "utf-8");
+        const claudeDir = getClaudeDir({ installDir });
+        const substituted = substituteTemplatePaths({
+          content,
+          installDir: claudeDir,
+        });
+        await fs.writeFile(destPath, substituted);
+        const commandName = entry.replace(/\.md$/, "");
+        const fullName = prefix ? `${prefix}/${commandName}` : commandName;
+        success({ message: `✓ /${fullName} slash command registered` });
+        registered++;
+      } catch {
+        warn({ message: `Failed to copy ${srcPath}, skipping` });
+        skipped++;
+      }
+    }
+  }
+
+  return { registered, skipped };
+};
+
+/**
  * Register all slash commands
  * @param args - Configuration arguments
  * @param args.config - Runtime configuration
@@ -72,60 +142,93 @@ const registerSlashCommands = async (args: {
   // Create commands directory if it doesn't exist
   await fs.mkdir(claudeCommandsDir, { recursive: true });
 
-  let registeredCount = 0;
-  let skippedCount = 0;
+  const { registered, skipped } = await copySlashCommandsRecursive({
+    srcDir: configDir,
+    destDir: claudeCommandsDir,
+    installDir: config.installDir,
+    prefix: null,
+  });
 
-  // Read all .md files from the profile's slashcommands directory
-  let files: Array<string>;
-  try {
-    files = await fs.readdir(configDir);
-  } catch {
-    info({ message: "Profile slashcommands directory not found, skipping" });
-    return;
-  }
-  const mdFiles = files.filter(
-    (file) => file.endsWith(".md") && file !== "docs.md",
-  );
-
-  for (const file of mdFiles) {
-    const commandSrc = path.join(configDir, file);
-    const commandDest = path.join(claudeCommandsDir, file);
-
-    try {
-      await fs.access(commandSrc);
-      // Read content and apply template substitution for markdown files
-      const content = await fs.readFile(commandSrc, "utf-8");
-      const claudeDir = getClaudeDir({ installDir: config.installDir });
-      const substituted = substituteTemplatePaths({
-        content,
-        installDir: claudeDir,
-      });
-      await fs.writeFile(commandDest, substituted);
-      const commandName = file.replace(/\.md$/, "");
-      success({ message: `✓ /${commandName} slash command registered` });
-      registeredCount++;
-    } catch {
-      warn({
-        message: `Slash command definition not found at ${commandSrc}, skipping`,
-      });
-      skippedCount++;
-    }
-  }
-
-  if (registeredCount > 0) {
+  if (registered > 0) {
     success({
-      message: `Successfully registered ${registeredCount} slash command${
-        registeredCount === 1 ? "" : "s"
+      message: `Successfully registered ${registered} slash command${
+        registered === 1 ? "" : "s"
       }`,
     });
   }
-  if (skippedCount > 0) {
+  if (skipped > 0) {
     warn({
-      message: `Skipped ${skippedCount} slash command${
-        skippedCount === 1 ? "" : "s"
+      message: `Skipped ${skipped} slash command${
+        skipped === 1 ? "" : "s"
       } (not found)`,
     });
   }
+};
+
+/**
+ * Recursively remove slash commands matching source structure
+ *
+ * @param args - Configuration arguments
+ * @param args.srcDir - Source directory to mirror structure from
+ * @param args.destDir - Destination directory to remove commands from
+ * @param args.prefix - Command prefix for nested directories (e.g., "nojo")
+ *
+ * @returns Count of removed commands
+ */
+const removeSlashCommandsRecursive = async (args: {
+  srcDir: string;
+  destDir: string;
+  prefix?: string | null;
+}): Promise<number> => {
+  const { srcDir, destDir, prefix } = args;
+  let removed = 0;
+
+  let entries: Array<string>;
+  try {
+    entries = await fs.readdir(srcDir);
+  } catch {
+    return removed;
+  }
+
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry);
+    const destPath = path.join(destDir, entry);
+    const stat = await fs.stat(srcPath);
+
+    if (stat.isDirectory()) {
+      // Recurse into subdirectory
+      const subRemoved = await removeSlashCommandsRecursive({
+        srcDir: srcPath,
+        destDir: destPath,
+        prefix: prefix ? `${prefix}/${entry}` : entry,
+      });
+      removed += subRemoved;
+
+      // Try to remove empty subdirectory
+      try {
+        const files = await fs.readdir(destPath);
+        if (files.length === 0) {
+          await fs.rmdir(destPath);
+          success({ message: `✓ Removed empty directory: ${destPath}` });
+        }
+      } catch {
+        // Directory doesn't exist or couldn't be removed
+      }
+    } else if (entry.endsWith(".md") && entry !== "docs.md") {
+      try {
+        await fs.access(destPath);
+        await fs.unlink(destPath);
+        const commandName = entry.replace(/\.md$/, "");
+        const fullName = prefix ? `${prefix}/${commandName}` : commandName;
+        success({ message: `✓ /${fullName} slash command removed` });
+        removed++;
+      } catch {
+        // File not found, which is fine
+      }
+    }
+  }
+
+  return removed;
 };
 
 /**
@@ -138,8 +241,6 @@ const unregisterSlashCommands = async (args: {
 }): Promise<void> => {
   const { config } = args;
   info({ message: "Removing nojo slash commands..." });
-
-  let removedCount = 0;
 
   // Get profile name from config - skip gracefully if not configured
   // (uninstall should be permissive and clean up whatever is possible)
@@ -162,32 +263,11 @@ const unregisterSlashCommands = async (args: {
     installDir: config.installDir,
   });
 
-  // Read all .md files from the profile's slashcommands directory
-  try {
-    const files = await fs.readdir(configDir);
-    const mdFiles = files.filter(
-      (file) => file.endsWith(".md") && file !== "docs.md",
-    );
-
-    for (const file of mdFiles) {
-      const commandPath = path.join(claudeCommandsDir, file);
-
-      try {
-        await fs.access(commandPath);
-        await fs.unlink(commandPath);
-        const commandName = file.replace(/\.md$/, "");
-        success({ message: `✓ /${commandName} slash command removed` });
-        removedCount++;
-      } catch {
-        const commandName = file.replace(/\.md$/, "");
-        info({
-          message: `/${commandName} slash command not found (may not be installed)`,
-        });
-      }
-    }
-  } catch {
-    info({ message: "Profile slashcommands directory not found" });
-  }
+  const removedCount = await removeSlashCommandsRecursive({
+    srcDir: configDir,
+    destDir: claudeCommandsDir,
+    prefix: null,
+  });
 
   if (removedCount > 0) {
     success({
@@ -207,6 +287,60 @@ const unregisterSlashCommands = async (args: {
   } catch {
     // Directory doesn't exist or couldn't be removed, which is fine
   }
+};
+
+/**
+ * Recursively validate slash commands exist
+ *
+ * @param args - Configuration arguments
+ * @param args.srcDir - Source directory to check structure from
+ * @param args.destDir - Destination directory to validate commands in
+ * @param args.prefix - Command prefix for nested directories (e.g., "nojo")
+ *
+ * @returns Expected count and list of missing commands
+ */
+const validateSlashCommandsRecursive = async (args: {
+  srcDir: string;
+  destDir: string;
+  prefix?: string | null;
+}): Promise<{ expected: number; missing: Array<string> }> => {
+  const { srcDir, destDir, prefix } = args;
+  let expected = 0;
+  const missing: Array<string> = [];
+
+  let entries: Array<string>;
+  try {
+    entries = await fs.readdir(srcDir);
+  } catch {
+    return { expected, missing };
+  }
+
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry);
+    const destPath = path.join(destDir, entry);
+    const stat = await fs.stat(srcPath);
+
+    if (stat.isDirectory()) {
+      const subResult = await validateSlashCommandsRecursive({
+        srcDir: srcPath,
+        destDir: destPath,
+        prefix: prefix ? `${prefix}/${entry}` : entry,
+      });
+      expected += subResult.expected;
+      missing.push(...subResult.missing);
+    } else if (entry.endsWith(".md") && entry !== "docs.md") {
+      expected++;
+      try {
+        await fs.access(destPath);
+      } catch {
+        const commandName = entry.replace(/\.md$/, "");
+        const fullName = prefix ? `${prefix}/${commandName}` : commandName;
+        missing.push(fullName);
+      }
+    }
+  }
+
+  return { expected, missing };
 };
 
 /**
@@ -258,27 +392,13 @@ const validate = async (args: {
     installDir: config.installDir,
   });
 
-  // Check if all expected slash commands are present
-  const missingCommands: Array<string> = [];
-  let expectedCount = 0;
+  const { expected, missing } = await validateSlashCommandsRecursive({
+    srcDir: configDir,
+    destDir: claudeCommandsDir,
+    prefix: null,
+  });
 
-  try {
-    const files = await fs.readdir(configDir);
-    const mdFiles = files.filter(
-      (file) => file.endsWith(".md") && file !== "docs.md",
-    );
-    expectedCount = mdFiles.length;
-
-    for (const file of mdFiles) {
-      const commandPath = path.join(claudeCommandsDir, file);
-      try {
-        await fs.access(commandPath);
-      } catch {
-        missingCommands.push(file.replace(/\.md$/, ""));
-      }
-    }
-  } catch {
-    // Profile slashcommands directory not found - this is valid (0 commands expected)
+  if (expected === 0) {
     return {
       valid: true,
       message: "No slash commands configured for this profile",
@@ -286,11 +406,9 @@ const validate = async (args: {
     };
   }
 
-  if (missingCommands.length > 0) {
+  if (missing.length > 0) {
     errors.push(
-      `Missing ${
-        missingCommands.length
-      } slash command(s): ${missingCommands.join(", ")}`,
+      `Missing ${missing.length} slash command(s): ${missing.join(", ")}`,
     );
     errors.push('Run "nojo install" to register missing commands');
     return {
@@ -302,7 +420,7 @@ const validate = async (args: {
 
   return {
     valid: true,
-    message: `All ${expectedCount} slash commands are properly installed`,
+    message: `All ${expected} slash commands are properly installed`,
     errors: null,
   };
 };
