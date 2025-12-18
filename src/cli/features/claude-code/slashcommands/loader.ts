@@ -23,7 +23,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Config directory containing global slash command markdown files
-const CONFIG_DIR = path.join(__dirname, "config");
+const CONFIG_DIR = path.join(__dirname, "config", "nojo");
 
 /**
  * Get list of global slash commands by reading the config directory
@@ -49,9 +49,10 @@ const registerSlashCommands = async (args: {
   info({ message: "Registering global nojo slash commands..." });
 
   const claudeCommandsDir = getClaudeHomeCommandsDir();
+  const nojoCommandsDir = path.join(claudeCommandsDir, "nojo");
 
-  // Create commands directory if it doesn't exist
-  await fs.mkdir(claudeCommandsDir, { recursive: true });
+  // Create nojo commands directory if it doesn't exist
+  await fs.mkdir(nojoCommandsDir, { recursive: true });
 
   const commands = await getGlobalSlashCommands();
   let registeredCount = 0;
@@ -59,7 +60,7 @@ const registerSlashCommands = async (args: {
   for (const commandName of commands) {
     const fileName = `${commandName}.md`;
     const commandSrc = path.join(CONFIG_DIR, fileName);
-    const commandDest = path.join(claudeCommandsDir, fileName);
+    const commandDest = path.join(nojoCommandsDir, fileName);
 
     // Read content and apply template substitution
     const content = await fs.readFile(commandSrc, "utf-8");
@@ -69,7 +70,7 @@ const registerSlashCommands = async (args: {
       installDir: claudeDir,
     });
     await fs.writeFile(commandDest, substituted);
-    success({ message: `✓ /${commandName} slash command registered` });
+    success({ message: `✓ /nojo/${commandName} slash command registered` });
     registeredCount++;
   }
 
@@ -96,17 +97,18 @@ const unregisterSlashCommands = async (args: {
   let removedCount = 0;
 
   const claudeCommandsDir = getClaudeHomeCommandsDir();
+  const nojoCommandsDir = path.join(claudeCommandsDir, "nojo");
 
   const commands = await getGlobalSlashCommands();
 
   for (const commandName of commands) {
     const fileName = `${commandName}.md`;
-    const commandPath = path.join(claudeCommandsDir, fileName);
+    const commandPath = path.join(nojoCommandsDir, fileName);
 
     try {
       await fs.access(commandPath);
       await fs.unlink(commandPath);
-      success({ message: `✓ /${commandName} slash command removed` });
+      success({ message: `✓ /nojo/${commandName} slash command removed` });
       removedCount++;
     } catch {
       // Command not found, which is fine
@@ -121,12 +123,12 @@ const unregisterSlashCommands = async (args: {
     });
   }
 
-  // Remove commands directory if empty
+  // Remove nojo commands directory if empty
   try {
-    const files = await fs.readdir(claudeCommandsDir);
+    const files = await fs.readdir(nojoCommandsDir);
     if (files.length === 0) {
-      await fs.rmdir(claudeCommandsDir);
-      success({ message: `✓ Removed empty directory: ${claudeCommandsDir}` });
+      await fs.rmdir(nojoCommandsDir);
+      success({ message: `✓ Removed empty directory: ${nojoCommandsDir}` });
     }
   } catch {
     // Directory doesn't exist or couldn't be removed, which is fine
@@ -147,12 +149,13 @@ const validate = async (args: {
   const errors: Array<string> = [];
 
   const claudeCommandsDir = getClaudeHomeCommandsDir();
+  const nojoCommandsDir = path.join(claudeCommandsDir, "nojo");
 
-  // Check if commands directory exists
+  // Check if nojo commands directory exists
   try {
-    await fs.access(claudeCommandsDir);
+    await fs.access(nojoCommandsDir);
   } catch {
-    errors.push(`Commands directory not found at ${claudeCommandsDir}`);
+    errors.push(`Commands directory not found at ${nojoCommandsDir}`);
     errors.push('Run "nojo install" to create the commands directory');
     return {
       valid: false,
@@ -167,7 +170,7 @@ const validate = async (args: {
 
   for (const commandName of commands) {
     const fileName = `${commandName}.md`;
-    const commandPath = path.join(claudeCommandsDir, fileName);
+    const commandPath = path.join(nojoCommandsDir, fileName);
 
     try {
       await fs.access(commandPath);

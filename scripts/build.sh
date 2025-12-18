@@ -80,7 +80,7 @@ mkdir -p build/src/cli/features/claude-code/slashcommands/config
 # Copy configuration files
 cp src/cli/features/claude-code/hooks/config/*.sh build/src/cli/features/claude-code/hooks/config/ 2>/dev/null || true
 cp src/cli/features/claude-code/statusline/config/*.sh build/src/cli/features/claude-code/statusline/config/ 2>/dev/null || true
-cp src/cli/features/claude-code/slashcommands/config/*.md build/src/cli/features/claude-code/slashcommands/config/ 2>/dev/null || true
+cp -r src/cli/features/claude-code/slashcommands/config/* build/src/cli/features/claude-code/slashcommands/config/ 2>/dev/null || true
 
 # Copy entire profile directories
 cp -r src/cli/features/claude-code/profiles/config/* build/src/cli/features/claude-code/profiles/config/ 2>/dev/null || true
